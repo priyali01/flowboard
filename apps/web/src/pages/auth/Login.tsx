@@ -1,9 +1,9 @@
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '../../stores/authStore';
+import { apiClient } from '../../api/client';
 import { useNavigate, Link } from 'react-router-dom';
 
 const loginSchema = z.object({
@@ -27,16 +27,12 @@ export const Login = () => {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
-      const res = await fetch('http://localhost:3000/v1/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Login failed');
+      try {
+        const { data: resData } = await apiClient.post('/auth/login', data);
+        return resData;
+      } catch (error: any) {
+        throw new Error(error.response?.data?.error || 'Login failed');
       }
-      return res.json();
     },
     onSuccess: (data) => {
       setAuth(data.user, data.accessToken);

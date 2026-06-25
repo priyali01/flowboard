@@ -1,8 +1,8 @@
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
+import { apiClient } from '../../api/client';
 import { useNavigate, Link } from 'react-router-dom';
 
 const registerSchema = z.object({
@@ -26,16 +26,12 @@ export const Register = () => {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterForm) => {
-      const res = await fetch('http://localhost:3000/v1/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Registration failed');
+      try {
+        const { data: resData } = await apiClient.post('/auth/register', data);
+        return resData;
+      } catch (error: any) {
+        throw new Error(error.response?.data?.error || 'Registration failed');
       }
-      return res.json();
     },
     onSuccess: () => {
       // Redirect to login after successful registration
