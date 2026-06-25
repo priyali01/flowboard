@@ -1,12 +1,15 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjects } from '../../hooks/useProjects';
-import { Folder, LogOut, Plus } from 'lucide-react';
+import { Folder, LogOut, Plus, Tag } from 'lucide-react';
+import { LabelManagerModal } from '../labels/LabelManagerModal';
+import { useState } from 'react';
 
 export const AppLayout = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const { data: projects, isLoading, createProject, isCreating } = useProjects();
+  const [showLabelModal, setShowLabelModal] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -61,7 +64,15 @@ export const AppLayout = () => {
         </div>
 
         <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center mb-4">
+          <button
+            onClick={() => setShowLabelModal(true)}
+            className="flex items-center w-full px-2 py-2 mb-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+          >
+            <Tag className="mr-3 h-5 w-5 text-gray-400" />
+            Manage Labels
+          </button>
+          
+          <div className="flex items-center mb-4 mt-4">
             <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
               {user?.name?.[0]?.toUpperCase()}
             </div>
@@ -83,6 +94,8 @@ export const AppLayout = () => {
       <div className="flex-1 overflow-auto">
         <Outlet />
       </div>
+
+      {showLabelModal && <LabelManagerModal onClose={() => setShowLabelModal(false)} />}
     </div>
   );
 };

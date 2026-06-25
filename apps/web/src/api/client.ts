@@ -22,6 +22,15 @@ export interface Project {
   updatedAt: string;
 }
 
+export interface Label {
+  id: string;
+  ownerId: string;
+  name: string;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Task {
   id: string;
   projectId: string;
@@ -30,6 +39,9 @@ export interface Task {
   status: 'TODO' | 'IN_PROGRESS' | 'DONE' | 'ARCHIVED';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   dueDate?: string;
+  parentId?: string;
+  labels?: Label[];
+  subtasks?: Task[];
   createdAt: string;
   updatedAt: string;
 }

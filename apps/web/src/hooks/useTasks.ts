@@ -16,7 +16,7 @@ export const useTasks = (projectId?: string) => {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (newTask: { projectId: string; title: string; status?: string; priority?: string }) => {
+    mutationFn: async (newTask: { projectId: string; title: string; status?: string; priority?: string; parentId?: string; labelIds?: string[] }) => {
       const { data } = await apiClient.post(`/projects/${newTask.projectId}/tasks`, newTask);
       return data;
     },
@@ -26,7 +26,7 @@ export const useTasks = (projectId?: string) => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<Task> & { id: string }) => {
+    mutationFn: async ({ id, ...updates }: Partial<Task> & { id: string; labelIds?: string[] }) => {
       const { data } = await apiClient.patch(`/tasks/${id}`, updates);
       return data;
     },

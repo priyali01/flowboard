@@ -4,7 +4,7 @@ import { TaskItem } from './TaskItem';
 import type { Task } from '../../api/client';
 import { Plus } from 'lucide-react';
 
-export const TaskList: React.FC<{ projectId: string }> = ({ projectId }) => {
+export const TaskList: React.FC<{ projectId: string; onSelectTask: (task: Task) => void }> = ({ projectId, onSelectTask }) => {
   const { data: tasks, isLoading, createTask } = useTasks(projectId);
   const [newTaskTitle, setNewTaskTitle] = useState('');
 
@@ -25,8 +25,8 @@ export const TaskList: React.FC<{ projectId: string }> = ({ projectId }) => {
           <p className="text-gray-500 text-sm italic mb-4">No tasks yet. Create one below!</p>
         ) : (
           <div className="mb-4">
-            {tasks?.map((task: Task) => (
-              <TaskItem key={task.id} task={task} projectId={projectId} />
+            {tasks?.filter((t: Task) => !t.parentId).map((task: Task) => (
+              <TaskItem key={task.id} task={task} projectId={projectId} onClick={() => onSelectTask(task)} />
             ))}
           </div>
         )}

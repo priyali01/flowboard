@@ -8,6 +8,8 @@ const createTaskSchema = z.object({
   status: z.enum(['TODO', 'IN_PROGRESS', 'DONE', 'ARCHIVED']).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
   dueDate: z.string().datetime().optional().nullable(),
+  parentId: z.string().uuid().optional().nullable(),
+  labelIds: z.array(z.string().uuid()).optional(),
 });
 
 export class TaskController {
@@ -23,6 +25,7 @@ export class TaskController {
 
       const tasks = await prisma.task.findMany({
         where: { projectId },
+        include: { labels: true },
         orderBy: { createdAt: 'desc' },
       });
       res.json(tasks);
@@ -35,7 +38,7 @@ export class TaskController {
     try {
       const userId = (req as any).user.userId;
       const projectId = String(req.params.projectId);
-      const data = createTaskSchema.parse(req.body);
+      const { labelIds, ...data } = createTaskSchema.parse(req.body);
 
       const project = await prisma.project.findUnique({ where: { id: projectId } });
       if (!project || project.ownerId !== userId) {
@@ -46,7 +49,9 @@ export class TaskController {
         data: {
           ...data,
           projectId,
+          ...(labelIds ? { labels: { connect: labelIds.map(id => ({ id })) } } : {}),
         },
+        include: { labels: true }
       });
 
       res.status(201).json(task);
@@ -62,7 +67,7 @@ export class TaskController {
     try {
       const userId = (req as any).user.userId;
       const id = String(req.params.id);
-      const data = createTaskSchema.partial().parse(req.body);
+      const { labelIds, ...data } = createTaskSchema.partial().parse(req.body);
 
       const task = await prisma.task.findUnique({ where: { id }, include: { project: true } });
       if (!task || task.project.ownerId !== userId) {
@@ -71,7 +76,11 @@ export class TaskController {
 
       const updatedTask = await prisma.task.update({
         where: { id },
-        data,
+        data: {
+          ...data,
+          ...(labelIds ? { labels: { set: labelIds.map(id => ({ id })) } } : {}),
+        },
+        include: { labels: true }
       });
 
       res.json(updatedTask);

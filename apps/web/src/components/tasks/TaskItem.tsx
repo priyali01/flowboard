@@ -7,9 +7,10 @@ import classNames from 'classnames';
 interface TaskItemProps {
   task: Task;
   projectId: string;
+  onClick: () => void;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, projectId }) => {
+export const TaskItem: React.FC<TaskItemProps> = ({ task, projectId, onClick }) => {
   const { updateTask, deleteTask } = useTasks(projectId);
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
@@ -34,7 +35,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, projectId }) => {
   return (
     <div className="flex items-center group py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-2 rounded-md transition-colors">
       <button 
-        onClick={toggleStatus}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleStatus();
+        }}
         className={classNames('mr-3 focus:outline-none', {
           'text-gray-300 hover:text-indigo-500': task.status !== 'DONE',
           'text-green-500 hover:text-green-600': task.status === 'DONE',
@@ -66,7 +70,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, projectId }) => {
               'text-gray-900': task.status !== 'DONE',
               'text-gray-400 line-through': task.status === 'DONE',
             })}
-            onClick={() => setIsEditing(true)}
+            onClick={onClick}
           >
             {task.title}
           </p>
