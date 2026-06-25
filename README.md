@@ -86,9 +86,12 @@ npm run test
 ## 🛣️ Roadmap
 
 - [x] **Stage 0:** Monorepo Setup & Foundation
-- [ ] **Stage 1:** Authentication (JWT, Register, Login)
-- [ ] **Stage 2:** Task Management API & UI
-- [ ] **Stage 3:** Real-time Updates & Advanced Features
+- [x] **Stage 1:** Authentication (JWT, Register, Login)
+- [x] **Stage 2:** Core Task & Project CRUD
+- [x] **Stage 3:** Advanced Task Details, Subtasks, & Labels
+- [ ] **Stage 4:** Search, Filtering, Sorting & Drag-and-Drop
+- [ ] **Stage 5:** Comments, Attachments & Activity History
+- [ ] **Stage 6:** Real-time Updates & Notifications
 
 ## 📝 License
 MIT License
