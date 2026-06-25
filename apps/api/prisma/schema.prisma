@@ -28,6 +28,8 @@ model User {
   projects      Project[]
   assignedTasks Task[]
   labels        Label[]
+  comments      Comment[]
+  activities    Activity[]
 
   @@map("users")
 }
@@ -93,6 +95,8 @@ model Task {
   parent      Task?         @relation("SubTasks", fields: [parentId], references: [id], onDelete: Cascade)
   subtasks    Task[]        @relation("SubTasks")
   labels      Label[]       @relation("TaskLabels")
+  comments    Comment[]
+  activities  Activity[]
 
   @@map("tasks")
 }
@@ -109,4 +113,33 @@ model Label {
   tasks     Task[]   @relation("TaskLabels")
 
   @@map("labels")
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  taskId    String   @map("task_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  content   String   @db.Text // Can hold TipTap JSON/HTML
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Activity {
+  id        String   @id @default(uuid()) @db.Uuid
+  taskId    String   @map("task_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  action    String   @db.VarChar(50) // e.g. "STATUS_CHANGED", "CREATED"
+  oldValue  String?  @map("old_value") @db.Text
+  newValue  String?  @map("new_value") @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("activities")
 }

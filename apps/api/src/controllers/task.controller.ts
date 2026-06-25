@@ -92,6 +92,9 @@ export class TaskController {
           ...data,
           projectId,
           ...(labelIds ? { labels: { connect: labelIds.map(id => ({ id })) } } : {}),
+          activities: {
+            create: { userId, action: 'CREATED' }
+          }
         },
         include: { labels: true }
       });
@@ -116,11 +119,21 @@ export class TaskController {
         return res.status(404).json({ error: 'Task not found' });
       }
 
+      const activitiesToCreate = [];
+      if (data.status && data.status !== task.status) {
+        activitiesToCreate.push({ userId, action: 'STATUS_CHANGED', oldValue: task.status, newValue: data.status });
+      } else {
+        activitiesToCreate.push({ userId, action: 'UPDATED' });
+      }
+
       const updatedTask = await prisma.task.update({
         where: { id },
         data: {
           ...data,
           ...(labelIds ? { labels: { set: labelIds.map(id => ({ id })) } } : {}),
+          activities: {
+            create: activitiesToCreate
+          }
         },
         include: { labels: true }
       });
