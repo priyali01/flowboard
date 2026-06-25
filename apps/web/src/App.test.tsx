@@ -1,10 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
+import React from 'react';
 
-describe('App', () => {
-  it('renders correctly', () => {
-    render(<App />);
-    // Vite template has "Get started"
-    expect(screen.getByText(/Get started/i)).toBeInTheDocument();
-  });
+test('renders App and redirects to login when unauthenticated', () => {
+  render(<App />);
+  const loginHeading = screen.getByRole('heading', { name: /login to flowboard/i });
+  expect(loginHeading).toBeInTheDocument();
 });
