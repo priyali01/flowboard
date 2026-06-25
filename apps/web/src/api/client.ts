@@ -40,6 +40,7 @@ export interface Task {
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   dueDate?: string;
   parentId?: string;
+  position: number;
   labels?: Label[];
   subtasks?: Task[];
   createdAt: string;

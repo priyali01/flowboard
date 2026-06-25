@@ -5,6 +5,8 @@ import { Register } from './pages/auth/Register';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 import { ProjectView } from './pages/app/Project';
+import { Today } from './pages/app/Today';
+import { Upcoming } from './pages/app/Upcoming';
 
 const queryClient = new QueryClient();
 
@@ -18,7 +20,9 @@ function App() {
           
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route path="/" element={<div className="p-8 h-full bg-white"><h1 className="text-2xl font-bold">Dashboard</h1><p className="mt-4 text-gray-600">Select a project from the sidebar to get started, or create a new one.</p></div>} />
+              <Route path="/" element={<Navigate to="/today" replace />} />
+              <Route path="/today" element={<Today />} />
+              <Route path="/upcoming" element={<Upcoming />} />
               <Route path="/projects/:projectId" element={<ProjectView />} />
             </Route>
           </Route>

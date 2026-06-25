@@ -84,6 +84,7 @@ model Task {
   priority    TaskPriority  @default(MEDIUM)
   dueDate     DateTime?     @map("due_date") @db.Timestamptz
   parentId    String?       @map("parent_id") @db.Uuid
+  position    Int           @default(0)
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz
 

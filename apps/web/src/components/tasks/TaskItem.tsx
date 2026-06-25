@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import type { Task } from '../../api/client';
 import { useTasks } from '../../hooks/useTasks';
-import { CheckCircle, Circle, Trash2 } from 'lucide-react';
+import { CheckCircle, Circle, Trash2, GripVertical } from 'lucide-react';
 import classNames from 'classnames';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface TaskItemProps {
   task: Task;
@@ -14,6 +16,21 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, projectId, onClick }) 
   const { updateTask, deleteTask } = useTasks(projectId);
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(task.title);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const toggleStatus = () => {
     updateTask({ id: task.id, status: task.status === 'DONE' ? 'TODO' : 'DONE' });
@@ -33,7 +50,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, projectId, onClick }) 
   };
 
   return (
-    <div className="flex items-center group py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-2 rounded-md transition-colors">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center group py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-2 rounded-md transition-colors bg-white relative z-10"
+    >
+      <div {...attributes} {...listeners} className="cursor-grab mr-2 text-gray-300 hover:text-gray-500 focus:outline-none">
+        <GripVertical size={16} />
+      </div>
+
       <button 
         onClick={(e) => {
           e.stopPropagation();

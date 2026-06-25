@@ -2,14 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import type { Task } from '../api/client';
 
-export const useTasks = (projectId?: string) => {
+export const useTasks = (projectId: string, filters: Record<string, string> = {}) => {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['tasks', projectId],
+    queryKey: ['tasks', projectId, filters],
     queryFn: async (): Promise<Task[]> => {
-      if (!projectId) return [];
-      const { data } = await apiClient.get(`/projects/${projectId}/tasks`);
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+      const { data } = await apiClient.get(`/projects/${projectId}/tasks?${params.toString()}`);
       return data;
     },
     enabled: !!projectId,
@@ -39,15 +42,26 @@ export const useTasks = (projectId?: string) => {
     mutationFn: async ({ id }: { id: string; projectId: string }) => {
       await apiClient.delete(`/tasks/${id}`);
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', variables.projectId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'global'] });
     },
   });
 
-  return { 
-    ...query, 
-    createTask: createMutation.mutateAsync, 
-    updateTask: updateMutation.mutateAsync, 
-    deleteTask: deleteMutation.mutateAsync 
+  const reorderMutation = useMutation({
+    mutationFn: async (tasks: { id: string; position: number }[]) => {
+      await apiClient.patch(`/projects/${projectId}/tasks/reorder`, { tasks });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+    },
+  });
+
+  return {
+    ...query,
+    createTask: createMutation.mutateAsync,
+    updateTask: updateMutation.mutateAsync,
+    deleteTask: deleteMutation.mutateAsync,
+    reorderTasks: reorderMutation.mutateAsync,
   };
 };

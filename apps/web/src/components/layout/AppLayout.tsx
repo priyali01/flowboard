@@ -1,7 +1,7 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjects } from '../../hooks/useProjects';
-import { Folder, LogOut, Plus, Tag } from 'lucide-react';
+import { Folder, LogOut, Plus, Tag, Calendar, Clock } from 'lucide-react';
 import { LabelManagerModal } from '../labels/LabelManagerModal';
 import { useState } from 'react';
 
@@ -32,6 +32,20 @@ export const AppLayout = () => {
         </div>
         
         <div className="flex-1 overflow-y-auto p-4">
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Views</h2>
+            <nav className="space-y-1">
+              <Link to="/today" className="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
+                <Clock className="mr-3 flex-shrink-0 h-5 w-5 text-indigo-500" />
+                Today
+              </Link>
+              <Link to="/upcoming" className="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
+                <Calendar className="mr-3 flex-shrink-0 h-5 w-5 text-indigo-500" />
+                Upcoming
+              </Link>
+            </nav>
+          </div>
+
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Projects</h2>
             <button 

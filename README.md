@@ -89,7 +89,7 @@ npm run test
 - [x] **Stage 1:** Authentication (JWT, Register, Login)
 - [x] **Stage 2:** Core Task & Project CRUD
 - [x] **Stage 3:** Advanced Task Details, Subtasks, & Labels
-- [ ] **Stage 4:** Search, Filtering, Sorting & Drag-and-Drop
+- [x] **Stage 4:** Search, Filtering, Sorting & Drag-and-Drop
 - [ ] **Stage 5:** Comments, Attachments & Activity History
 - [ ] **Stage 6:** Real-time Updates & Notifications
 
