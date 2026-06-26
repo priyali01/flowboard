@@ -3,6 +3,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useProjects } from '../../hooks/useProjects';
 import { Folder, LogOut, Plus, Tag, Calendar, Clock } from 'lucide-react';
 import { LabelManagerModal } from '../labels/LabelManagerModal';
+import { TemplatesModal } from '../tasks/TemplatesModal';
 import { useState } from 'react';
 import { NotificationTray } from './NotificationTray';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
@@ -16,6 +17,7 @@ export const AppLayout = () => {
   const navigate = useNavigate();
   const { data: projects, isLoading, createProject, isCreating } = useProjects(activeWorkspaceId || undefined);
   const [showLabelModal, setShowLabelModal] = useState(false);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -56,6 +58,29 @@ export const AppLayout = () => {
                 <Calendar className="mr-3 flex-shrink-0 h-5 w-5 text-indigo-500" />
                 Upcoming
               </Link>
+            </nav>
+          </div>
+
+          <div className="mb-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Workspace Tools</h2>
+            <nav className="space-y-1">
+              <button 
+                onClick={() => setShowLabelModal(true)}
+                className="w-full flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+              >
+                <Tag className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400" />
+                Labels
+              </button>
+              <button 
+                onClick={() => {
+                  if(!activeWorkspaceId) alert('Select workspace first');
+                  else setShowTemplatesModal(true);
+                }}
+                className="w-full flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+              >
+                <Plus className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400" />
+                Templates
+              </button>
             </nav>
           </div>
 
@@ -123,6 +148,7 @@ export const AppLayout = () => {
       </div>
 
       {showLabelModal && <LabelManagerModal onClose={() => setShowLabelModal(false)} />}
+      {showTemplatesModal && <TemplatesModal onClose={() => setShowTemplatesModal(false)} />}
     </div>
   );
 };

@@ -92,11 +92,14 @@ model Task {
   dueDate     DateTime?     @map("due_date") @db.Timestamptz
   parentId    String?       @map("parent_id") @db.Uuid
   position    Float         @default(0)
+  recurrenceRule String?    @map("recurrence_rule") @db.VarChar(255)
+  templateId  String?       @map("template_id") @db.Uuid
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz
 
   project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignee    User?         @relation("AssignedTasks", fields: [assigneeId], references: [id], onDelete: SetNull)
+  template    TaskTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
   parent      Task?         @relation("SubTasks", fields: [parentId], references: [id], onDelete: Cascade)
   subtasks    Task[]        @relation("SubTasks")
   labels      Label[]       @relation("TaskLabels")
@@ -104,6 +107,22 @@ model Task {
   activities  Activity[]
 
   @@map("tasks")
+}
+
+model TaskTemplate {
+  id          String        @id @default(uuid()) @db.Uuid
+  workspaceId String        @map("workspace_id") @db.Uuid
+  title       String        @db.VarChar(255)
+  description String?       @db.Text
+  priority    TaskPriority  @default(MEDIUM)
+  labelIds    String[]      @map("label_ids") @db.Uuid
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@map("task_templates")
 }
 
 model Label {
@@ -171,6 +190,7 @@ model Workspace {
   owner     User     @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members   WorkspaceMember[]
   projects  Project[]
+  templates TaskTemplate[]
 
   @@map("workspaces")
 }

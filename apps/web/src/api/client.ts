@@ -45,6 +45,19 @@ export interface Task {
   subtasks?: Task[];
   assigneeId?: string | null;
   assignee?: { id: string; name: string; avatarUrl: string | null } | null;
+  recurrenceRule?: string | null;
+  templateId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TaskTemplate {
+  id: string;
+  workspaceId: string;
+  title: string;
+  description?: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  labelIds: string[];
   createdAt: string;
   updatedAt: string;
 }

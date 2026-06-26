@@ -3,6 +3,7 @@ import { prisma } from '../db';
 import { z } from 'zod';
 import { socketService } from '../services/socket.service';
 import { verifyProjectAccess } from '../utils/permissions';
+import { RRule, rrulestr } from 'rrule';
 
 const createTaskSchema = z.object({
   title: z.string().min(1).max(255),
@@ -14,6 +15,7 @@ const createTaskSchema = z.object({
   labelIds: z.array(z.string().uuid()).optional(),
   position: z.number().optional(),
   assigneeId: z.string().uuid().optional().nullable(),
+  recurrenceRule: z.string().optional().nullable(),
 });
 
 const reorderTasksSchema = z.object({
@@ -157,6 +159,38 @@ export class TaskController {
           data: { userId, message: `Task "${task.title}" status changed to ${data.status}` }
         });
         socketService.emitToUser(userId, 'new_notification', {});
+
+        // Handle Recurrence Spawn
+        if (data.status === 'DONE' && updatedTask.recurrenceRule) {
+          try {
+            const rule = rrulestr(updatedTask.recurrenceRule);
+            // Get the next occurrence strictly after the current due date (or now if none)
+            const nextDate = rule.after(updatedTask.dueDate || new Date(), false);
+            if (nextDate) {
+              const newTask = await prisma.task.create({
+                data: {
+                  title: updatedTask.title,
+                  description: updatedTask.description,
+                  priority: updatedTask.priority,
+                  projectId: updatedTask.projectId,
+                  assigneeId: updatedTask.assigneeId,
+                  dueDate: nextDate,
+                  recurrenceRule: updatedTask.recurrenceRule,
+                  labels: {
+                    connect: updatedTask.labels.map(l => ({ id: l.id }))
+                  },
+                  activities: {
+                    create: { userId, action: 'CREATED' }
+                  }
+                },
+                include: { labels: true, assignee: { select: { id: true, name: true, avatarUrl: true } } }
+              });
+              socketService.emitToUser(userId, 'task_created', newTask);
+            }
+          } catch (err) {
+            console.error('Failed to spawn recurring task:', err);
+          }
+        }
       }
 
       if (assigneeId && assigneeId !== task.assigneeId && assigneeId !== userId) {

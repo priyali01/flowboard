@@ -8,6 +8,7 @@ import commentRoutes from './routes/comment.routes';
 import activityRoutes from './routes/activity.routes';
 import notificationRoutes from './routes/notification.routes';
 import workspaceRoutes from './routes/workspace.routes';
+import templateRoutes from './routes/template.routes';
 import { authMiddleware } from './middleware/auth.middleware';
 
 export const app = express();
@@ -23,6 +24,7 @@ app.use('/v1', commentRoutes);
 app.use('/v1', activityRoutes);
 app.use('/v1', notificationRoutes);
 app.use('/v1/workspaces', authMiddleware, workspaceRoutes);
+app.use('/v1', authMiddleware, templateRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });

@@ -5,10 +5,12 @@ import { useLabels } from '../../hooks/useLabels';
 import { X, Flag, Tag, CheckCircle, Circle, Plus, Trash2, MessageSquare, Activity as ActivityIcon, CheckSquare, User } from 'lucide-react';
 import classNames from 'classnames';
 import { useWorkspaces, useWorkspaceStore } from '../../hooks/useWorkspaces';
+import { useTemplates } from '../../hooks/useTemplates';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { CommentThread } from '../comments/CommentThread';
 import { ActivityFeed } from '../activity/ActivityFeed';
+import { Repeat, Save } from 'lucide-react';
 
 interface TaskDetailPanelProps {
   task: Task;
@@ -27,6 +29,7 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({ task, projectI
   const { data: workspaces } = useWorkspaces();
   const { activeWorkspaceId } = useWorkspaceStore();
   const activeWorkspace = workspaces?.find(w => w.id === activeWorkspaceId) || workspaces?.[0];
+  const { createTemplate } = useTemplates(activeWorkspace?.id);
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -85,6 +88,21 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({ task, projectI
     updateTask({ id: task.id, labelIds: newLabelIds });
   };
 
+  const handleRecurrenceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    updateTask({ id: task.id, recurrenceRule: e.target.value || null });
+  };
+
+  const handleSaveAsTemplate = () => {
+    createTemplate.mutate({
+      title: task.title,
+      description: task.description || undefined,
+      priority: task.priority,
+      labelIds: task.labels?.map(l => l.id) || [],
+    }, {
+      onSuccess: () => alert('Template saved!')
+    });
+  };
+
   return (
     <div className="fixed inset-y-0 right-0 w-[450px] bg-white shadow-2xl border-l border-gray-200 z-50 flex flex-col">
       {/* Header */}
@@ -108,7 +126,16 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({ task, projectI
         {/* Top Content: Title, Meta, Desc */}
         <div className="p-6 space-y-6 flex-shrink-0">
           {/* Title */}
-          <h2 className="text-xl font-bold text-gray-900">{task.title}</h2>
+          <div className="flex justify-between items-start">
+            <h2 className="text-xl font-bold text-gray-900">{task.title}</h2>
+            <button 
+              onClick={handleSaveAsTemplate}
+              className="text-gray-400 hover:text-indigo-600 transition-colors p-1"
+              title="Save as Template"
+            >
+              <Save size={18} />
+            </button>
+          </div>
 
           {/* Meta properties */}
           <div className="grid grid-cols-3 gap-y-4 text-sm text-gray-500 items-center">
@@ -140,6 +167,20 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({ task, projectI
                 <option value="MEDIUM">Medium</option>
                 <option value="HIGH">High</option>
                 <option value="URGENT">Urgent</option>
+              </select>
+            </div>
+
+            <div className="flex items-center"><Repeat size={16} className="mr-2" /> Repeat</div>
+            <div className="col-span-2">
+              <select 
+                value={task.recurrenceRule || ''}
+                onChange={handleRecurrenceChange}
+                className="border-none bg-transparent focus:ring-0 p-0 font-medium cursor-pointer hover:bg-gray-50 rounded"
+              >
+                <option value="">Never</option>
+                <option value="FREQ=DAILY">Daily</option>
+                <option value="FREQ=WEEKLY">Weekly</option>
+                <option value="FREQ=MONTHLY">Monthly</option>
               </select>
             </div>
 
