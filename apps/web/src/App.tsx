@@ -7,6 +7,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { ProjectView } from './pages/app/Project';
 import { Today } from './pages/app/Today';
 import { Upcoming } from './pages/app/Upcoming';
+import { DashboardPage } from './pages/DashboardPage';
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ function App() {
               <Route path="/" element={<Navigate to="/today" replace />} />
               <Route path="/today" element={<Today />} />
               <Route path="/upcoming" element={<Upcoming />} />
+              <Route path="/analytics" element={<DashboardPage />} />
               <Route path="/projects/:projectId" element={<ProjectView />} />
             </Route>
           </Route>

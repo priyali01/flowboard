@@ -1,7 +1,7 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjects } from '../../hooks/useProjects';
-import { Folder, LogOut, Plus, Tag, Calendar, Clock } from 'lucide-react';
+import { Folder, LogOut, Plus, Tag, Calendar, Clock, BarChart } from 'lucide-react';
 import { LabelManagerModal } from '../labels/LabelManagerModal';
 import { TemplatesModal } from '../tasks/TemplatesModal';
 import { useState } from 'react';
@@ -57,6 +57,10 @@ export const AppLayout = () => {
               <Link to="/upcoming" className="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
                 <Calendar className="mr-3 flex-shrink-0 h-5 w-5 text-indigo-500" />
                 Upcoming
+              </Link>
+              <Link to="/analytics" className="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
+                <BarChart className="mr-3 flex-shrink-0 h-5 w-5 text-indigo-500" />
+                Analytics
               </Link>
             </nav>
           </div>
