@@ -8,6 +8,7 @@ import { ProjectView } from './pages/app/Project';
 import { Today } from './pages/app/Today';
 import { Upcoming } from './pages/app/Upcoming';
 import { DashboardPage } from './pages/DashboardPage';
+import { Inbox } from './pages/app/Inbox';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const queryClient = new QueryClient();
@@ -23,7 +24,8 @@ function App() {
             
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
-                <Route path="/" element={<Navigate to="/today" replace />} />
+                <Route path="/" element={<Navigate to="/inbox" replace />} />
+                <Route path="/inbox" element={<Inbox />} />
                 <Route path="/today" element={<Today />} />
                 <Route path="/upcoming" element={<Upcoming />} />
                 <Route path="/analytics" element={<DashboardPage />} />

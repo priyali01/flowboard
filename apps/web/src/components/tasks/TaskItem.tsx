@@ -1,114 +1,92 @@
-import { useState } from 'react';
-import type { Task } from '../../api/client';
-import { useTasks } from '../../hooks/useTasks';
-import { CheckCircle, Circle, Trash2, GripVertical } from 'lucide-react';
-import classNames from 'classnames';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import React from 'react';
+import { cn } from '../../lib/utils';
+import { GripVertical, MoreHorizontal, Calendar as CalendarIcon } from 'lucide-react';
+import { Checkbox } from '../ui/checkbox';
+import { Badge } from '../ui/badge';
+import { format, isPast, isToday } from 'date-fns';
 
-interface TaskItemProps {
-  task: Task;
-  projectId: string;
-  onClick: () => void;
+export interface TaskItemProps {
+  task: {
+    id: string;
+    title: string;
+    status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+    dueDate?: string | null;
+    labels?: { name: string; color: string }[];
+  };
+  onToggle: (id: string, completed: boolean) => void;
+  onClick?: (id: string) => void;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, projectId, onClick }) => {
-  const { updateTask, deleteTask } = useTasks(projectId);
-  const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(task.title);
+export const TaskItem = ({ task, onToggle, onClick }: TaskItemProps) => {
+  const isCompleted = task.status === 'DONE';
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+  const priorityColors = {
+    LOW: 'bg-gray-400',
+    MEDIUM: 'bg-blue-500',
+    HIGH: 'bg-orange-500',
+    URGENT: 'bg-red-500',
   };
 
-  const toggleStatus = () => {
-    updateTask({ id: task.id, status: task.status === 'DONE' ? 'TODO' : 'DONE' });
-  };
-
-  const handleTitleSubmit = () => {
-    if (title.trim() && title !== task.title) {
-      updateTask({ id: task.id, title: title.trim() });
-    }
-    setIsEditing(false);
-  };
-
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      deleteTask({ id: task.id, projectId });
-    }
+  const renderDueDate = () => {
+    if (!task.dueDate) return null;
+    const date = new Date(task.dueDate);
+    const overdue = isPast(date) && !isToday(date) && !isCompleted;
+    
+    return (
+      <div className={cn(
+        "flex items-center text-xs font-medium mr-3",
+        overdue ? "text-red-600" : isToday(date) ? "text-amber-600" : "text-[var(--text-secondary)]"
+      )}>
+        {isToday(date) ? 'Today' : format(date, 'MMM d')}
+      </div>
+    );
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center group py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-2 rounded-md transition-colors bg-white relative z-10"
+    <div 
+      onClick={() => onClick?.(task.id)}
+      className={cn(
+        "group flex items-center py-2 px-1 border-b border-[var(--border-default)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer",
+        isCompleted && "opacity-60"
+      )}
     >
-      <div {...attributes} {...listeners} className="cursor-grab mr-2 text-gray-300 hover:text-gray-500 focus:outline-none">
-        <GripVertical size={16} />
+      <div className="text-[var(--text-secondary)] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing px-1 mr-1">
+        <GripVertical className="h-4 w-4" />
+      </div>
+      
+      <div className="mr-3" onClick={(e) => e.stopPropagation()}>
+        <Checkbox 
+          checked={isCompleted} 
+          onCheckedChange={(checked) => onToggle(task.id, checked)} 
+        />
       </div>
 
-      <button 
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleStatus();
-        }}
-        className={classNames('mr-3 focus:outline-none', {
-          'text-gray-300 hover:text-indigo-500': task.status !== 'DONE',
-          'text-green-500 hover:text-green-600': task.status === 'DONE',
-        })}
-      >
-        {task.status === 'DONE' ? <CheckCircle size={20} /> : <Circle size={20} />}
-      </button>
+      <div className={cn(
+        "flex-1 text-sm font-medium transition-all",
+        isCompleted ? "text-[var(--text-secondary)] line-through" : "text-[var(--text-primary)]"
+      )}>
+        {task.title}
+      </div>
 
-      <div className="flex-1 min-w-0">
-        {isEditing ? (
-          <input
-            type="text"
-            className="w-full bg-white border border-indigo-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleTitleSubmit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleTitleSubmit();
-              if (e.key === 'Escape') {
-                setTitle(task.title);
-                setIsEditing(false);
-              }
-            }}
-            autoFocus
-          />
-        ) : (
-          <p 
-            className={classNames('text-sm font-medium truncate cursor-pointer', {
-              'text-gray-900': task.status !== 'DONE',
-              'text-gray-400 line-through': task.status === 'DONE',
-            })}
-            onClick={onClick}
-          >
-            {task.title}
-          </p>
+      <div className="flex items-center shrink-0 ml-4">
+        {task.labels?.slice(0, 2).map((label, i) => (
+          <Badge key={i} variant="secondary" className="mr-2 text-[10px] py-0 font-medium">
+            {label.name}
+          </Badge>
+        ))}
+        {task.labels && task.labels.length > 2 && (
+          <span className="text-xs text-[var(--text-secondary)] mr-2">+{task.labels.length - 2}</span>
         )}
-      </div>
 
-      <div className="ml-4 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={handleDelete}
-          className="text-gray-400 hover:text-red-500 p-1"
-          title="Delete task"
-        >
-          <Trash2 size={16} />
+        {renderDueDate()}
+
+        <div className="w-6 flex items-center justify-center">
+          <div className={cn("w-2 h-2 rounded-full", priorityColors[task.priority])} />
+        </div>
+
+        <button className="opacity-0 group-hover:opacity-100 p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-default)] rounded transition-all ml-1">
+          <MoreHorizontal className="h-4 w-4" />
         </button>
       </div>
     </div>

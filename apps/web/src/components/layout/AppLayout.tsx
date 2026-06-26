@@ -95,7 +95,7 @@ export const AppLayout = () => {
         {/* Nav Links */}
         <div className="flex-1 overflow-y-auto px-3 py-2 space-y-6">
           <div className="space-y-1">
-            <NavItem to="/" icon={Inbox} label="Inbox" badge={3} />
+            <NavItem to="/inbox" icon={Inbox} label="Inbox" badge={3} />
             <NavItem to="/today" icon={Sun} label="Today" badge={5} />
             <NavItem to="/upcoming" icon={Calendar} label="Upcoming" />
             <NavItem to="/search" icon={Search} label="Search" />
