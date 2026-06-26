@@ -1,7 +1,7 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjects } from '../../hooks/useProjects';
-import { Folder, LogOut, Plus, Tag, Calendar, Clock, BarChart } from 'lucide-react';
+import { Folder, LogOut, Plus, Tag, Calendar, Clock, BarChart, Sun, Moon } from 'lucide-react';
 import { LabelManagerModal } from '../labels/LabelManagerModal';
 import { TemplatesModal } from '../tasks/TemplatesModal';
 import { useState } from 'react';
@@ -10,10 +10,12 @@ import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 import { useSocketSync } from '../../hooks/useSocketSync';
 import { useWorkspaceStore } from '../../hooks/useWorkspaces';
 import { useNetworkSync } from '../../hooks/useNetworkSync';
+import { useDarkMode } from '../../hooks/useDarkMode';
 
 export const AppLayout = () => {
   useSocketSync();
   const { isOnline, isSyncing } = useNetworkSync();
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   const { user, logout } = useAuthStore();
   const { activeWorkspaceId } = useWorkspaceStore();
   const navigate = useNavigate();
@@ -40,11 +42,16 @@ export const AppLayout = () => {
   return (
     <div className="flex h-screen bg-white">
       {/* Sidebar */}
-      <div className="w-64 flex-shrink-0 border-r border-gray-200 bg-gray-50 flex flex-col">
-        <div className="p-4 border-b border-gray-200 flex flex-col gap-2 z-40">
+      <div className="w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex flex-col">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex flex-col gap-2 z-40">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900">FlowBoard</h1>
-            <NotificationTray />
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">FlowBoard</h1>
+            <div className="flex items-center gap-2">
+              <button onClick={toggleDarkMode} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+              <NotificationTray />
+            </div>
           </div>
           {!isOnline && (
             <div className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 text-center">

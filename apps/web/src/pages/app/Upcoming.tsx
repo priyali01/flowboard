@@ -3,6 +3,8 @@ import type { Task } from '../../api/client';
 import { useGlobalTasks } from '../../hooks/useGlobalTasks';
 import { TaskItem } from '../../components/tasks/TaskItem';
 import { TaskDetailPanel } from '../../components/tasks/TaskDetailPanel';
+import { TaskListSkeleton } from '../../components/common/SkeletonLoader';
+import { Calendar } from 'lucide-react';
 
 export const Upcoming = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -26,9 +28,9 @@ export const Upcoming = () => {
       
       <div className="max-w-3xl mx-auto">
         {isLoading ? (
-          <p className="text-gray-500">Loading tasks...</p>
+          <TaskListSkeleton />
         ) : tasks && tasks.length > 0 ? (
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
             {tasks.map(task => (
               <TaskItem 
                 key={task.id} 
@@ -39,7 +41,11 @@ export const Upcoming = () => {
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No upcoming tasks scheduled.</p>
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <Calendar className="h-16 w-16 text-indigo-200 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Nothing coming up</h3>
+            <p className="mt-2 text-sm text-gray-500">You don't have any tasks scheduled for the next 7 days.</p>
+          </div>
         )}
       </div>
 

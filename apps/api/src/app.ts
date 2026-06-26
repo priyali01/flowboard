@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { authRoutes } from './routes/auth.routes';
 import { projectRoutes } from './routes/project.routes';
 import { taskRoutes } from './routes/task.routes';
@@ -15,8 +17,19 @@ import { authMiddleware } from './middleware/auth.middleware';
 
 export const app = express();
 
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again after 15 minutes',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/v1', apiLimiter);
 
 app.use('/v1/auth', authRoutes);
 app.use('/v1/projects', projectRoutes);

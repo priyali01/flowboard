@@ -8,30 +8,33 @@ import { ProjectView } from './pages/app/Project';
 import { Today } from './pages/app/Today';
 import { Upcoming } from './pages/app/Upcoming';
 import { DashboardPage } from './pages/DashboardPage';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Navigate to="/today" replace />} />
-              <Route path="/today" element={<Today />} />
-              <Route path="/upcoming" element={<Upcoming />} />
-              <Route path="/analytics" element={<DashboardPage />} />
-              <Route path="/projects/:projectId" element={<ProjectView />} />
+      <ErrorBoundary>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Navigate to="/today" replace />} />
+                <Route path="/today" element={<Today />} />
+                <Route path="/upcoming" element={<Upcoming />} />
+                <Route path="/analytics" element={<DashboardPage />} />
+                <Route path="/projects/:projectId" element={<ProjectView />} />
+              </Route>
             </Route>
-          </Route>
-          
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+            
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTasks } from '../../hooks/useTasks';
 import { TaskItem } from './TaskItem';
 import type { Task } from '../../api/client';
-import { Plus } from 'lucide-react';
+import { Plus, FolderOpen } from 'lucide-react';
+import { TaskListSkeleton } from '../common/SkeletonLoader';
 import {
   DndContext,
   closestCenter,
@@ -60,13 +61,17 @@ export const TaskList: React.FC<{ projectId: string; onSelectTask: (task: Task) 
     }
   };
 
-  if (isLoading) return <div className="p-4 text-gray-500">Loading tasks...</div>;
+  if (isLoading) return <TaskListSkeleton />;
 
   return (
-    <div className="max-w-3xl mx-auto w-full bg-white rounded-lg shadow mt-6 overflow-hidden">
+    <div className="max-w-3xl mx-auto w-full bg-white dark:bg-gray-800 rounded-lg shadow mt-6 overflow-hidden border border-gray-200 dark:border-gray-700">
       <div className="p-4">
         {localTasks.length === 0 ? (
-          <p className="text-gray-500 text-sm italic mb-4">No tasks yet. Create one below!</p>
+          <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg mb-4">
+            <FolderOpen className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white">No tasks yet</h3>
+            <p className="mt-1 text-sm text-gray-500">Get started by creating a new task below.</p>
+          </div>
         ) : (
           <DndContext 
             sensors={sensors}
@@ -86,12 +91,12 @@ export const TaskList: React.FC<{ projectId: string; onSelectTask: (task: Task) 
           </DndContext>
         )}
         
-        <form onSubmit={handleCreateTask} className="flex items-center mt-2 border-t border-gray-100 pt-4">
+        <form onSubmit={handleCreateTask} className="flex items-center mt-2 border-t border-gray-100 dark:border-gray-700 pt-4">
           <Plus className="text-gray-400 mr-2" size={20} />
           <input
             type="text"
             placeholder="Add a new task..."
-            className="flex-1 text-sm border-0 focus:ring-0 p-2"
+            className="flex-1 text-sm border-0 focus:ring-0 p-2 bg-transparent dark:text-white dark:placeholder-gray-400"
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
           />

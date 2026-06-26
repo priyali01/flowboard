@@ -3,6 +3,8 @@ import type { Task } from '../../api/client';
 import { useGlobalTasks } from '../../hooks/useGlobalTasks';
 import { TaskItem } from '../../components/tasks/TaskItem';
 import { TaskDetailPanel } from '../../components/tasks/TaskDetailPanel';
+import { TaskListSkeleton } from '../../components/common/SkeletonLoader';
+import { CheckCircle2 } from 'lucide-react';
 
 export const Today = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -23,9 +25,9 @@ export const Today = () => {
       
       <div className="max-w-3xl mx-auto">
         {isLoading ? (
-          <p className="text-gray-500">Loading tasks...</p>
+          <TaskListSkeleton />
         ) : tasks && tasks.length > 0 ? (
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
             {tasks.map(task => (
               <TaskItem 
                 key={task.id} 
@@ -36,7 +38,11 @@ export const Today = () => {
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No tasks due today. Enjoy your day!</p>
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <CheckCircle2 className="h-16 w-16 text-indigo-200 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">You're all caught up!</h3>
+            <p className="mt-2 text-sm text-gray-500">No tasks due today. Enjoy your day or plan ahead.</p>
+          </div>
         )}
       </div>
 
