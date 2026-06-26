@@ -1,6 +1,6 @@
 <div align="center">
 
-# ✅ To-Do Application
+# ✅ FlowBoard-To-Do Application
 
 **A modern, full-stack productivity tool for individuals and teams.**
 
