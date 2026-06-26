@@ -1,0 +1,1200 @@
+# 🎨 UI Plan — To-Do Application
+
+> Companion to `plan.md`. Covers every screen, component, interaction, design token, and visual rule needed to build the frontend.
+
+---
+
+## Table of Contents
+
+1. [Design Philosophy](#1-design-philosophy)
+2. [Design Tokens](#2-design-tokens)
+3. [Typography](#3-typography)
+4. [Spacing & Layout Grid](#4-spacing--layout-grid)
+5. [Iconography](#5-iconography)
+6. [Component Library](#6-component-library)
+7. [Page-by-Page Wireframe Specs](#7-page-by-page-wireframe-specs)
+   - 7.1 Auth Pages
+   - 7.2 App Shell (Layout)
+   - 7.3 Inbox / Project View
+   - 7.4 Task Detail Panel
+   - 7.5 Today View
+   - 7.6 Upcoming View
+   - 7.7 Search Page
+   - 7.8 Analytics Page
+   - 7.9 Settings Pages
+   - 7.10 Notification Center
+   - 7.11 Onboarding Tour
+8. [Interaction & Motion](#8-interaction--motion)
+9. [Responsive Behaviour](#9-responsive-behaviour)
+10. [Dark Mode](#10-dark-mode)
+11. [Accessibility](#11-accessibility)
+12. [Empty States](#12-empty-states)
+13. [Loading & Skeleton States](#13-loading--skeleton-states)
+14. [Error States](#14-error-states)
+15. [Keyboard Shortcuts](#15-keyboard-shortcuts)
+16. [Component File Map](#16-component-file-map)
+
+---
+
+## 1. Design Philosophy
+
+| Principle | What it means in practice |
+|-----------|--------------------------|
+| **Calm productivity** | No loud gradients or heavy chrome. Plenty of whitespace. The task content is the hero. |
+| **Speed first** | Every action feels instant via optimistic updates. Skeleton loaders replace blank screens. |
+| **Glanceable** | Priority, due date, and status must be readable in under one second per row. |
+| **Progressive disclosure** | Show the minimum fields first; reveal extras on demand (quick-add → full detail). |
+| **Keyboard-native** | Every core action reachable without a mouse. |
+| **Accessible by default** | WCAG 2.1 AA contrast ratios, focus rings, ARIA labels baked in from day one — not bolted on at the end. |
+
+---
+
+## 2. Design Tokens
+
+All tokens live in `src/styles/globals.css` as CSS custom properties and are mirrored in `tailwind.config.ts` so they're usable as Tailwind classes.
+
+### Color Palette
+
+#### Brand
+```css
+--color-primary-50:  #eef2ff;
+--color-primary-100: #e0e7ff;
+--color-primary-200: #c7d2fe;
+--color-primary-300: #a5b4fc;
+--color-primary-400: #818cf8;
+--color-primary-500: #6366f1;   /* ← main brand / interactive */
+--color-primary-600: #4f46e5;   /* hover state */
+--color-primary-700: #4338ca;   /* active / pressed */
+--color-primary-800: #3730a3;
+--color-primary-900: #312e81;
+```
+
+#### Semantic
+```css
+/* Success */
+--color-success: #10b981;
+--color-success-light: #d1fae5;
+
+/* Warning */
+--color-warning: #f59e0b;
+--color-warning-light: #fef3c7;
+
+/* Danger */
+--color-danger: #ef4444;
+--color-danger-light: #fee2e2;
+
+/* Info */
+--color-info: #3b82f6;
+--color-info-light: #dbeafe;
+```
+
+#### Priority Colors
+```css
+--color-priority-urgent: #ef4444;   /* red */
+--color-priority-high:   #f97316;   /* orange */
+--color-priority-medium: #3b82f6;   /* blue */
+--color-priority-low:    #9ca3af;   /* gray */
+```
+
+#### Neutral Scale (used for backgrounds, text, borders)
+```css
+--color-neutral-0:   #ffffff;
+--color-neutral-50:  #f9fafb;
+--color-neutral-100: #f3f4f6;
+--color-neutral-200: #e5e7eb;
+--color-neutral-300: #d1d5db;
+--color-neutral-400: #9ca3af;
+--color-neutral-500: #6b7280;
+--color-neutral-600: #4b5563;
+--color-neutral-700: #374151;
+--color-neutral-800: #1f2937;
+--color-neutral-900: #111827;
+--color-neutral-950: #030712;
+```
+
+#### Semantic Surface Tokens (light mode)
+```css
+--bg-app:         var(--color-neutral-50);    /* outer page background */
+--bg-surface:     var(--color-neutral-0);     /* cards, panels */
+--bg-subtle:      var(--color-neutral-100);   /* hover rows, input bg */
+--bg-overlay:     rgba(0,0,0,0.4);            /* modal backdrop */
+
+--text-primary:   var(--color-neutral-900);
+--text-secondary: var(--color-neutral-500);
+--text-disabled:  var(--color-neutral-300);
+--text-inverse:   var(--color-neutral-0);
+
+--border-default: var(--color-neutral-200);
+--border-strong:  var(--color-neutral-300);
+--border-focus:   var(--color-primary-500);
+```
+
+---
+
+## 3. Typography
+
+**Font stack:**
+```css
+--font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+--font-mono: 'JetBrains Mono', ui-monospace, monospace;
+```
+
+Load both via Google Fonts or self-host in `/public/fonts/`.
+
+### Type Scale
+
+| Token | Size | Line height | Weight | Usage |
+|-------|------|------------|--------|-------|
+| `text-xs` | 12px | 16px | 400 | Labels, badges, timestamps |
+| `text-sm` | 14px | 20px | 400 | Body secondary, descriptions |
+| `text-base` | 16px | 24px | 400 | Body primary, task titles |
+| `text-lg` | 18px | 28px | 500 | Section headings in panels |
+| `text-xl` | 20px | 28px | 600 | Page titles (Today, Inbox) |
+| `text-2xl` | 24px | 32px | 700 | Auth page headlines |
+| `text-3xl` | 30px | 36px | 700 | Onboarding hero |
+
+### Text Colour Rules
+- Primary content: `--text-primary`
+- Supporting metadata (dates, counts): `--text-secondary`
+- Placeholder text in inputs: `--text-disabled`
+- Completed task titles: `--text-secondary` + `line-through`
+
+---
+
+## 4. Spacing & Layout Grid
+
+Base unit: **4px**. All margins, paddings, and gaps are multiples of 4.
+
+```
+4px  → xs  (tight inline gaps)
+8px  → sm  (icon-to-label gaps, inner cell padding)
+12px → md- (compact rows)
+16px → md  (standard section padding)
+20px → lg- (card padding)
+24px → lg  (section gap)
+32px → xl  (major section separation)
+48px → 2xl (page-level top padding)
+```
+
+### App Shell Dimensions
+
+| Region | Width / Height |
+|--------|--------------|
+| Sidebar (desktop) | 240px fixed |
+| Sidebar (collapsed) | 56px (icons only) |
+| Task list column | Fluid (fills remaining space) |
+| Task detail panel | 380px fixed, right side |
+| Header height | 56px |
+| Mobile nav height | 64px |
+| Modal max-width | 560px |
+| Toast width | 360px |
+
+---
+
+## 5. Iconography
+
+**Library:** [Lucide React](https://lucide.dev/) — consistent stroke-based icons, tree-shakeable.
+
+**Size rules:**
+- Inline with text: `16px` (`size-4`)
+- Standalone action icons: `20px` (`size-5`)
+- Empty-state illustrations: custom SVG, 80–120px
+
+### Icon → Concept Map
+
+| Icon | Meaning / use |
+|------|--------------|
+| `CheckCircle2` | Complete task (filled = done) |
+| `Circle` | Incomplete task checkbox |
+| `Plus` | Create new (task, project, label) |
+| `Grip` | Drag handle |
+| `Calendar` | Due date |
+| `Flag` | Priority |
+| `Tag` | Label |
+| `ChevronRight` | Expand / navigate into |
+| `ChevronDown` | Collapse |
+| `MoreHorizontal` | Context menu (3 dots) |
+| `Trash2` | Delete |
+| `Archive` | Archive |
+| `Pencil` | Edit |
+| `Search` | Search |
+| `Bell` | Notifications |
+| `Settings` | Settings |
+| `Users` | Team / workspace |
+| `Inbox` | Inbox view |
+| `Sun` | Today view |
+| `CalendarDays` | Upcoming view |
+| `BarChart2` | Analytics |
+| `Paperclip` | Attachment |
+| `MessageSquare` | Comment |
+| `Repeat` | Recurring task |
+| `User` | Assignee |
+| `Moon` / `Sun` | Dark / light mode toggle |
+| `LogOut` | Sign out |
+| `X` | Close / dismiss |
+| `Check` | Confirm |
+| `AlertCircle` | Error state |
+| `Loader2` | Spinner (animated `spin`) |
+
+---
+
+## 6. Component Library
+
+Built on **shadcn/ui** primitives. Every component listed below should have its own file in `src/components/`.
+
+### 6.1 Base / Primitive Components (`src/components/ui/`)
+
+These come from shadcn/ui and are customised with design tokens:
+
+| Component | File | Notes |
+|-----------|------|-------|
+| Button | `button.tsx` | Variants: `default`, `outline`, `ghost`, `destructive`, `link` |
+| Input | `input.tsx` | Always show focus ring in `--border-focus` color |
+| Textarea | `textarea.tsx` | Auto-resize with `field-sizing: content` |
+| Checkbox | `checkbox.tsx` | Custom animated checkmark on complete |
+| Badge | `badge.tsx` | Used for priority, labels, status |
+| Avatar | `avatar.tsx` | Fallback to initials if no image |
+| Tooltip | `tooltip.tsx` | Delay 400ms; max-width 200px |
+| Popover | `popover.tsx` | Date picker, color picker |
+| Dialog / Modal | `dialog.tsx` | Animated entry/exit via Framer Motion |
+| Dropdown Menu | `dropdown-menu.tsx` | Context menus, "more options" |
+| Select | `select.tsx` | Priority picker, status picker |
+| Separator | `separator.tsx` | Horizontal rule between sections |
+| Skeleton | `skeleton.tsx` | Animated shimmer placeholder |
+| Toast | `toast.tsx` + `toaster.tsx` | Bottom-right, auto-dismiss 4s |
+| Sheet | `sheet.tsx` | Slide-in panel for mobile task detail |
+| Progress | `progress.tsx` | Project completion bar |
+| Switch | `switch.tsx` | Toggle for notification preferences |
+| Calendar | `calendar.tsx` | Date picker (shadcn wraps react-day-picker) |
+| Command | `command.tsx` | Powers the quick-search command palette |
+
+### 6.2 Layout Components (`src/components/layout/`)
+
+| Component | Description |
+|-----------|-------------|
+| `AppShell.tsx` | Root layout: sidebar + main content area |
+| `Sidebar.tsx` | Left nav: logo, views list, project list, labels |
+| `Header.tsx` | Top bar: view title, search trigger, notification bell, avatar |
+| `MobileNav.tsx` | Bottom tab bar on mobile (Today, Inbox, Search, Profile) |
+| `PageContainer.tsx` | Adds consistent max-width and padding to page content |
+| `SplitView.tsx` | Desktop 2-column: task list left, detail panel right |
+
+### 6.3 Task Components (`src/components/tasks/`)
+
+| Component | Description |
+|-----------|-------------|
+| `TaskList.tsx` | `@dnd-kit` sortable container rendering `TaskItem` rows |
+| `TaskItem.tsx` | Single task row: checkbox, title, due date, priority dot, label chips, assignee avatar, drag handle |
+| `TaskQuickAdd.tsx` | Single-line input at top/bottom of list for fast task creation |
+| `TaskForm.tsx` | Full create/edit form inside a modal (all task fields) |
+| `TaskDetail.tsx` | Right panel showing full task detail (title, description, all metadata, subtasks, comments, activity) |
+| `TaskDetailHeader.tsx` | Title + complete button + close button at top of detail panel |
+| `TaskProperties.tsx` | Sidebar-style metadata block: status, priority, due date, assignee, labels |
+| `SubtaskList.tsx` | Checklist of nested tasks with quick-add inline |
+| `SubtaskItem.tsx` | Single subtask row with checkbox and inline edit |
+| `PriorityBadge.tsx` | Coloured flag icon + label chip |
+| `DueDateBadge.tsx` | Date display that turns red when overdue |
+| `LabelChip.tsx` | Coloured pill showing label name |
+| `TaskDragOverlay.tsx` | Custom drag preview when dragging a task row |
+| `TaskContextMenu.tsx` | Right-click menu: edit, move, duplicate, archive, delete |
+| `BulkActionBar.tsx` | Sticky bottom bar when multiple tasks are selected |
+
+### 6.4 Project Components (`src/components/projects/`)
+
+| Component | Description |
+|-----------|-------------|
+| `ProjectList.tsx` | Collapsible list in sidebar with project colour dots |
+| `ProjectItem.tsx` | Single sidebar project row: colour, name, task count, context menu |
+| `ProjectForm.tsx` | Create / rename project modal (name, colour, icon) |
+| `ProjectHeader.tsx` | Top of project view: name, task count, filter/sort buttons, "…" menu |
+| `ProjectProgress.tsx` | Thin progress bar showing % complete |
+
+### 6.5 Comment Components (`src/components/comments/`)
+
+| Component | Description |
+|-----------|-------------|
+| `CommentThread.tsx` | Ordered list of comments + new comment input at bottom |
+| `CommentItem.tsx` | Avatar + name + timestamp + markdown content + edit/delete actions |
+| `CommentInput.tsx` | TipTap mini editor with submit button and markdown toolbar |
+
+### 6.6 Label Components (`src/components/labels/`)
+
+| Component | Description |
+|-----------|-------------|
+| `LabelPicker.tsx` | Popover showing all labels as checkboxes with colour dots; includes create-new inline |
+| `LabelForm.tsx` | Small inline form: label name + colour swatch picker |
+| `ColorSwatch.tsx` | Grid of 16 preset hex colours to choose from |
+
+### 6.7 Auth Components (`src/components/auth/`)
+
+| Component | Description |
+|-----------|-------------|
+| `LoginForm.tsx` | Email + password + "Forgot password?" link |
+| `RegisterForm.tsx` | Name + email + password + confirm password + terms checkbox |
+| `ResetRequestForm.tsx` | Email input to trigger reset email |
+| `ResetPasswordForm.tsx` | New password + confirm (shown after clicking email link) |
+| `AuthCard.tsx` | Centered card wrapper used by all auth pages |
+| `OAuthButtons.tsx` | Google / GitHub sign-in buttons (future) |
+
+### 6.8 Notification Components (`src/components/notifications/`)
+
+| Component | Description |
+|-----------|-------------|
+| `NotificationBell.tsx` | Icon with red dot badge; opens `NotificationPanel` |
+| `NotificationPanel.tsx` | Popover list of recent notifications with "Mark all read" |
+| `NotificationItem.tsx` | Single notification row: icon, message, time, read/unread state |
+
+### 6.9 Search Components (`src/components/search/`)
+
+| Component | Description |
+|-----------|-------------|
+| `CommandPalette.tsx` | Full-screen overlay triggered by `Ctrl/Cmd + K`; wraps shadcn `Command` |
+| `SearchInput.tsx` | Debounced input in the Header that routes to `/search` |
+| `SearchResultItem.tsx` | Task result row: title + project name + due date |
+| `FilterBar.tsx` | Row of filter chips (status, priority, label, due date) with clear button |
+| `SortMenu.tsx` | Dropdown: due date, priority, created, alphabetical, manual |
+
+### 6.10 Analytics Components (`src/components/analytics/`)
+
+| Component | Description |
+|-----------|-------------|
+| `CompletionChart.tsx` | recharts `BarChart` — tasks completed per day/week/month |
+| `StatCard.tsx` | Single metric: number + label + trend indicator |
+| `StreakBadge.tsx` | Fire emoji + current streak in days |
+| `OverdueWidget.tsx` | Count of overdue tasks with quick-link to filter |
+
+---
+
+## 7. Page-by-Page Wireframe Specs
+
+### 7.1 Auth Pages
+
+#### Login Page (`/login`)
+
+```
+┌──────────────────────────────────────────┐
+│                                          │
+│           [App Logo + Name]              │
+│                                          │
+│   ┌──────────────────────────────────┐   │
+│   │        Welcome back 👋           │   │
+│   │   Sign in to your account        │   │
+│   │                                  │   │
+│   │  Email                           │   │
+│   │  [________________________________] │
+│   │                                  │   │
+│   │  Password              Forgot?   │   │
+│   │  [________________________________] │
+│   │                                  │   │
+│   │  [        Sign In           ]    │   │
+│   │                                  │   │
+│   │  ──────────── or ────────────   │   │
+│   │                                  │   │
+│   │  Don't have an account? Sign up  │   │
+│   └──────────────────────────────────┘   │
+│                                          │
+└──────────────────────────────────────────┘
+```
+
+- Background: `--bg-app` (light gray); card: white, `rounded-2xl`, subtle shadow
+- Logo centered above card
+- Input focus: indigo ring
+- "Sign In" button: full width, `bg-primary-500`, white text
+- Error state: red border on input + error message below field
+- Loading state: button shows spinner + "Signing in…" text, disabled
+
+#### Register Page (`/register`)
+
+Same card layout as login, with fields:
+- Full name
+- Email
+- Password (show/hide toggle)
+- Confirm password
+- Terms checkbox ("I agree to Terms of Service")
+- Submit button: "Create account"
+- Link below: "Already have an account? Sign in"
+
+After submit → success banner: "Check your email to verify your account."
+
+#### Forgot Password (`/forgot-password`)
+
+- Single email input
+- "Send reset link" button
+- After submit → green success state: "If that email exists, we sent a reset link."
+
+#### Reset Password (`/reset-password?token=...`)
+
+- New password + confirm password
+- Password strength meter (4-step: Weak → Fair → Good → Strong)
+- "Reset password" button
+- On success → redirect to `/login` with toast: "Password updated. Please sign in."
+
+---
+
+### 7.2 App Shell (Layout)
+
+#### Desktop (≥ 1024px) — 3-column layout
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  SIDEBAR (240px)         │  TASK LIST (fluid)  │  DETAIL (380px) │
+│                          │                     │                  │
+│  [Logo]   [Workspace ▾]  │  [Header + Actions] │  [Task Title]    │
+│                          │  ─────────────────  │  [Description]   │
+│  ○ Inbox          3      │  □ Task one    🔴   │  [Properties]    │
+│  ○ Today          5      │  □ Task two    ●    │  [Subtasks]      │
+│  ○ Upcoming       2      │  □ Task three  🟠   │  [Comments]      │
+│  ○ Search                │  + Add task         │  [Activity]      │
+│                          │                     │                  │
+│  PROJECTS ▾              │                     │                  │
+│  ● Work          12      │                     │                  │
+│  ● Personal       4      │                     │                  │
+│  ● Side project   7      │                     │                  │
+│  + New project           │                     │                  │
+│                          │                     │                  │
+│  LABELS ▾                │                     │                  │
+│  🔵 Design               │                     │                  │
+│  🟢 Dev                  │                     │                  │
+│                          │                     │                  │
+│  ─────────────────────   │                     │                  │
+│  [Avatar] John Doe   ⚙   │                     │                  │
+└──────────────────────────┴─────────────────────┴──────────────────┘
+```
+
+**Sidebar behaviour:**
+- Collapsible to 56px icon-rail via toggle button (chevron at bottom of sidebar)
+- Project list is a collapsible accordion (`▾ PROJECTS`)
+- Labels list is collapsible (`▾ LABELS`)
+- Bottom row: user avatar + name + settings gear icon
+- Active view: `bg-primary-50` row + `text-primary-600` text + left `border-l-2 border-primary-500`
+- Hover: `bg-neutral-100`
+- Project task counts shown as small `text-secondary` number on the right
+
+**Header (top of task list column):**
+- Left: current view name (`text-xl font-semibold`)
+- Right: Filter icon · Sort icon · "···" menu · (team view: member avatars)
+
+**Detail panel:**
+- Slides in from right when a task is clicked
+- Has its own scroll, independent from task list
+- Close button (X) top right
+- If no task selected: centered empty state "Select a task to see details"
+
+---
+
+### 7.3 Inbox / Project View
+
+#### Task List
+
+```
+┌───────────────────────────────────────────────────────┐
+│  Work                                 ⊞ Filter  ↕ Sort │
+│  12 tasks · 3 completed today                          │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│  ⠿  ○  Design new landing page         🔴 Today   ●●  │
+│  ⠿  ○  Write API docs                  🟠 Fri    ●    │
+│  ⠿  ●  Set up CI pipeline              ✓ Done         │
+│  ⠿  ○  Review pull requests            — No date  ●   │
+│                                                        │
+│  + Add a task…                                         │
+└───────────────────────────────────────────────────────┘
+```
+
+**Task row anatomy (left → right):**
+1. Drag handle (`⠿`) — visible on hover only
+2. Checkbox circle — click to complete; animates checkmark + row fades with strikethrough
+3. Task title — `text-base`; completed tasks get `text-secondary line-through`
+4. Spacer (flex-grow)
+5. Label chips (up to 2 visible; `+N more` if more)
+6. Due date badge — shows `Today` in amber, `Overdue` in red, otherwise `Mon 14`
+7. Priority dot — coloured circle using priority color tokens
+8. Assignee avatar — 20px circle, shown only in team projects
+
+**Hover state on row:**
+- Row background → `bg-neutral-50`
+- Drag handle becomes visible
+- Show context menu button (···) at far right
+
+**Quick-Add bar:**
+- Shown at the bottom of the list (or top in "Today" view)
+- Placeholder: "Add a task…"
+- On click: expands to show title input + due date + priority picker inline
+- Press `Enter` to save, `Esc` to cancel
+
+**Bulk selection:**
+- Clicking a checkbox while holding `Shift` selects a range
+- Checkbox column appears on left when any task is selected
+- `BulkActionBar` slides up from the bottom: "3 selected · Complete · Move · Label · Delete"
+
+---
+
+### 7.4 Task Detail Panel
+
+```
+┌───────────────────────────────────────────────┐
+│  ○ [Complete]          [Open full page]  [X]  │
+│━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━│
+│                                               │
+│  Design new landing page                      │
+│  (inline editable title, click to edit)       │
+│                                               │
+│  Description                                  │
+│  ┌─────────────────────────────────────────┐  │
+│  │ [TipTap editor — markdown/WYSIWYG]      │  │
+│  │ Bold  Italic  Code  Link  List  …       │  │
+│  └─────────────────────────────────────────┘  │
+│                                               │
+│  PROPERTIES                                   │
+│  Status      [In Progress ▾]                  │
+│  Priority    [🔴 Urgent ▾]                    │
+│  Due Date    [📅 Today, Jun 27 ▾]             │
+│  Project     [● Work ▾]                       │
+│  Assignee    [👤 Unassigned ▾]                │
+│  Labels      [+ Add label]                    │
+│  Recurrence  [🔁 None ▾]                      │
+│                                               │
+│  SUBTASKS  (2 / 5 complete)                   │
+│  ━━━━━━━━━━━━━━━━━━━━━━  [40%]               │
+│  ✓  Write copy                                │
+│  ✓  Design mockups                            │
+│  ○  Get feedback                              │
+│  ○  Implement revisions                       │
+│  ○  Final review                              │
+│  + Add subtask                                │
+│                                               │
+│  ATTACHMENTS                                  │
+│  📎 mockup-v2.png          230 KB  [↓] [✕]   │
+│  [  Drop files here or click to upload  ]     │
+│                                               │
+│  COMMENTS (3)                                 │
+│  [Avatar]  Sarah Chen · 2 hr ago              │
+│  Looks good! Left a few notes on the mockup.  │
+│  ─────────────────────────────────────────    │
+│  [Avatar]  John Doe · 1 hr ago                │
+│  Thanks, will address before EOD.             │
+│  ─────────────────────────────────────────    │
+│  [Avatar]  [Write a comment…          ] [↵]  │
+│                                               │
+│  ACTIVITY                                     │
+│  • John created this task  — Jun 25           │
+│  • Sarah assigned to John  — Jun 26           │
+│  • Priority changed to Urgent — Jun 27        │
+└───────────────────────────────────────────────┘
+```
+
+**Properties behaviour:**
+- Each property row is a button that opens a popover/dropdown inline
+- Changes save immediately (no "Save" button) — optimistic update
+- Due date: opens a calendar popover with time picker below
+- Assignee: opens member avatar list popover (search within workspace)
+- Labels: opens `LabelPicker` popover (multi-select)
+
+---
+
+### 7.5 Today View
+
+```
+┌──────────────────────────────────────────────────────┐
+│  ☀️ Today  ·  Friday, June 27             Filter Sort │
+│                                                      │
+│  OVERDUE  (2)                                        │
+│  ───────────────────────────────────────────         │
+│  ⠿  ○  Write unit tests       🔴 Yesterday  ●●      │
+│  ⠿  ○  Submit invoice         🔴 Mon 23     ●       │
+│                                                      │
+│  WORK  (3)                                           │
+│  ───────────────────────────────────────────         │
+│  ⠿  ○  Design landing page    🔴 Today      ●●      │
+│  ⠿  ○  Team standup           Today         ●       │
+│  ⠿  ●  Deploy hotfix          ✓ Done                │
+│                                                      │
+│  PERSONAL  (1)                                       │
+│  ───────────────────────────────────────────         │
+│  ⠿  ○  Buy groceries          Today                  │
+│                                                      │
+│  + Add task for today                                │
+└──────────────────────────────────────────────────────┘
+```
+
+- Grouped by project, with project colour dot next to section header
+- Overdue section always appears first with red header text
+- Completed tasks shown at bottom of each group (collapsible: "Show 1 completed")
+- Adding a task here auto-sets due date to today
+
+---
+
+### 7.6 Upcoming View
+
+```
+┌──────────────────────────────────────────────────────┐
+│  📅 Upcoming                              Filter Sort │
+│                                                      │
+│  SATURDAY  Jun 28                                    │
+│  ───────────────────────────────────────────         │
+│  ⠿  ○  Weekend planning session    ●                 │
+│                                                      │
+│  MONDAY  Jun 30                                      │
+│  ───────────────────────────────────────────         │
+│  ⠿  ○  Client call — Acme Corp     🔴  ●●           │
+│  ⠿  ○  Code review                 ●                 │
+│                                                      │
+│  TUESDAY  Jul 1                                      │
+│  ───────────────────────────────────────────         │
+│  ⠿  ○  Monthly report due          🟠  ●            │
+│                                                      │
+│  WED – FRI  Jul 2–4                                  │
+│  ───────────────────────────────────────────         │
+│  ⠿  ○  Prepare sprint demo         ●                 │
+└──────────────────────────────────────────────────────┘
+```
+
+- Date group headers: `text-sm font-semibold text-secondary uppercase`
+- Sticky date headers as user scrolls
+- Tasks beyond 7 days are not shown (link: "View all future tasks")
+
+---
+
+### 7.7 Search Page (`/search`)
+
+```
+┌──────────────────────────────────────────────────────┐
+│  🔍 [Search tasks, projects, comments…          ]    │
+│                                                      │
+│  Filter by:  [All ▾]  [Any priority ▾]  [Any date ▾]│
+│                                                      │
+│  Results for "landing page"                   4      │
+│  ───────────────────────────────────────────         │
+│  ○  Design new landing page       Work · Today       │
+│  ○  Landing page copy draft       Work · Jun 30      │
+│  ○  Review landing page mockups   Work · Done        │
+│     Comment: "Looks great…"       Personal · Jun 25  │
+│                                                      │
+└──────────────────────────────────────────────────────┘
+```
+
+- Search input auto-focuses on page load
+- Debounce: 300ms
+- Results show: task title + project name + due date
+- Comment results show the matched text snippet in `text-secondary italic`
+- Clicking a result opens the task detail panel (or full page on mobile)
+- Empty state: "No results for 'xyz'" + illustration
+
+**Command Palette** (`Ctrl/Cmd + K`):
+- Full-screen overlay with dark backdrop
+- Recent tasks shown by default
+- Type to filter instantly
+- Keyboard navigation: `↑↓` to move, `Enter` to open, `Esc` to dismiss
+- Also supports commands: `> new task`, `> new project`, `> go to settings`
+
+---
+
+### 7.8 Analytics Page (`/analytics`)
+
+```
+┌──────────────────────────────────────────────────────┐
+│  📊 Analytics                    [This week ▾]       │
+│                                                      │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐ │
+│  │ 24       │ │ 3        │ │ 🔥 7 day │ │ 94%    │ │
+│  │ Completed│ │ Overdue  │ │  Streak  │ │ On-time│ │
+│  └──────────┘ └──────────┘ └──────────┘ └────────┘ │
+│                                                      │
+│  Tasks completed — last 7 days                       │
+│  ┌────────────────────────────────────────────────┐  │
+│  │   █                                            │  │
+│  │   █       █                                    │  │
+│  │   █   █   █   █       █                        │  │
+│  │   █   █   █   █   █   █   █                    │  │
+│  │  Mon Tue Wed Thu Fri Sat Sun                   │  │
+│  └────────────────────────────────────────────────┘  │
+│                                                      │
+│  By project                                          │
+│  Work          ████████████░░░  68%                  │
+│  Personal      ████░░░░░░░░░░░  24%                  │
+│  Side project  █░░░░░░░░░░░░░░   8%                  │
+│                                                      │
+│  [Export CSV]  [Export PDF]                          │
+└──────────────────────────────────────────────────────┘
+```
+
+- Stat cards: white `rounded-xl` with subtle shadow; trend arrow (↑ green / ↓ red)
+- Bar chart: `recharts BarChart` with `--color-primary-500` fill
+- Project breakdown: horizontal stacked bars
+- Time range toggle: This week / This month / Last 30 days / All time
+
+---
+
+### 7.9 Settings Pages (`/settings/*`)
+
+Shared left-nav layout within settings:
+
+```
+┌─────────────────────────────────────────────────────┐
+│  ← Back to app                                      │
+│  ┌──────────────┬────────────────────────────────┐  │
+│  │ Profile      │  [Content for selected section] │  │
+│  │ Account      │                                 │  │
+│  │ Notifications│                                 │  │
+│  │ Appearance   │                                 │  │
+│  │ Integrations │                                 │  │
+│  │ Team         │                                 │  │
+│  └──────────────┴────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+```
+
+**Profile (`/settings/profile`):**
+- Avatar upload (click to change; drag-and-drop)
+- Full name input
+- Email (read-only; "Change email" link opens modal flow)
+- Timezone dropdown
+- Save button (only active when changes detected)
+
+**Account (`/settings/account`):**
+- Change password section (current + new + confirm)
+- Danger zone: "Delete account" — red bordered section, requires typing "DELETE" to confirm
+
+**Notifications (`/settings/notifications`):**
+- Toggle switches per notification type (push, email, in-app)
+- Email digest: Off / Daily / Weekly
+- "Test notification" button for push
+
+**Appearance (`/settings/appearance`):**
+- Theme: Light / Dark / System (3-option segmented control with icon preview)
+- Language selector (for future i18n)
+
+**Team (`/settings/team`) — workspace admins only:**
+- Member list table: avatar, name, email, role dropdown, "Remove" button
+- "Invite member" button → modal with email input + role select
+- Pending invites section
+
+---
+
+### 7.10 Notification Center
+
+Triggered by the bell icon in the header. Opens as a popover (desktop) or bottom sheet (mobile).
+
+```
+┌──────────────────────────────────────────┐
+│  Notifications          [Mark all read]  │
+│ ────────────────────────────────────────│
+│  🔵  Sarah assigned you a task           │
+│       "Review mockups"  · 5 min ago      │
+│ ────────────────────────────────────────│
+│  ○   Task due tomorrow: "Client call"    │
+│       Work  · 1 hr ago                   │
+│ ────────────────────────────────────────│
+│  ○   John commented on "Landing page"    │
+│       "Looks great! One small …"  2 hr   │
+│ ────────────────────────────────────────│
+│  [View all notifications]                │
+└──────────────────────────────────────────┘
+```
+
+- Unread items: blue left border + `bg-primary-50`
+- Bell icon shows red dot badge when there are unread notifications
+- Max 5 shown in popover; "View all" goes to `/notifications` full page
+
+---
+
+### 7.11 Onboarding Tour
+
+Shown only to new users after first login (can be dismissed and restarted from settings).
+
+**Step 1 — Welcome modal:**
+- Headline: "Welcome to your To-Do App 🎉"
+- Subtext: "Let's get you set up in 2 minutes."
+- CTA: "Get started"
+
+**Step 2 — Create first project:**
+- Spotlight overlay on "+ New project" in sidebar
+- Tooltip: "Create a project to organise your tasks."
+
+**Step 3 — Add first task:**
+- Spotlight on "Quick Add" bar
+- Tooltip: "Type a task and press Enter."
+
+**Step 4 — Explore views:**
+- Spotlight on "Today" sidebar link
+- Tooltip: "Today shows all tasks due today across every project."
+
+**Step 5 — Done:**
+- Confetti burst animation (canvas-confetti)
+- Modal: "You're all set! Explore at your own pace."
+- CTA: "Start working"
+
+Progress: dots indicator at bottom of each modal (● ○ ○ ○ ○ → ● ● ○ ○ ○ etc.)
+
+---
+
+## 8. Interaction & Motion
+
+All animations use **Framer Motion**. Keep durations short — this is a productivity tool, not a portfolio site.
+
+### Timing Reference
+
+| Interaction | Duration | Easing |
+|------------|---------|--------|
+| Button hover/active | 100ms | ease-out |
+| Row hover highlight | 120ms | ease-out |
+| Task complete (fade + strikethrough) | 300ms | ease-in-out |
+| Modal open | 200ms | ease-out |
+| Modal close | 150ms | ease-in |
+| Detail panel slide in (desktop) | 250ms | ease-out |
+| Sheet slide up (mobile) | 300ms | spring (stiffness 400, damping 40) |
+| Sidebar collapse/expand | 200ms | ease-in-out |
+| Toast slide in | 250ms | spring |
+| Toast slide out | 200ms | ease-in |
+| Skeleton shimmer | 1500ms | linear, infinite |
+| Drag overlay lift | 150ms | ease-out (scale 1.02, slight shadow) |
+| Confetti (onboarding) | 2500ms | physics |
+
+### Key Micro-interactions
+
+**Task completion:**
+1. User clicks checkbox
+2. Checkbox immediately shows checkmark (optimistic)
+3. Title gets `line-through` and fades to `text-secondary` over 300ms
+4. Task slides slightly down and fades out of active list after 800ms delay (so user can see it happened)
+5. Success toast: "Task completed ✓  [Undo]"
+
+**Task creation (quick-add):**
+1. Input expands with a subtle height animation
+2. New task row appears at top of list with a brief green flash (`bg-success-light`)
+3. Input clears, ready for next task
+
+**Drag and drop:**
+1. On drag start: picked-up row becomes a translucent overlay; a placeholder gap remains in list
+2. While dragging: other rows slide apart smoothly to indicate drop position
+3. On drop: row snaps into position; order saved immediately (optimistic, background API call)
+4. On drag fail (network error): row snaps back with shake animation + toast
+
+**Notifications badge:**
+- New notification: bell icon does a brief `ring` rotate animation (15deg left-right, 3 times)
+- Badge count increments with a small scale-up pop
+
+---
+
+## 9. Responsive Behaviour
+
+### Breakpoints
+
+| Name | Width | Layout |
+|------|-------|--------|
+| Mobile | < 640px | Single column; no sidebar; bottom tab nav |
+| Tablet | 640px–1023px | Collapsible sidebar; task detail as full-screen modal |
+| Desktop | ≥ 1024px | Full 3-column split view |
+| Wide | ≥ 1280px | Detail panel increases to 420px |
+
+### Mobile-Specific Patterns
+
+- **Bottom Tab Bar** (`MobileNav.tsx`): Today · Inbox · Search · Profile — fixed at bottom, 64px tall, safe area inset respected
+- **Sidebar as Drawer**: swipe right or tap hamburger to reveal; closes on backdrop tap or swipe left
+- **Task Detail**: opens as full-screen page (not a panel); back button top-left returns to list
+- **Quick-Add**: floating `+` button bottom-right (FAB) at 56px; tap to open bottom sheet with task form
+- **Drag-and-Drop**: disabled on touch (use long-press context menu to move instead)
+- **Swipe actions on task rows**: swipe left to reveal "Delete" (red) and "Archive" (gray) actions
+
+### Tablet-Specific Patterns
+
+- Sidebar is 200px and collapsible
+- Task detail opens as a modal dialog (not side panel)
+- Command palette available via keyboard
+
+---
+
+## 10. Dark Mode
+
+Implemented via `class="dark"` on `<html>` (Tailwind's `darkMode: 'class'` strategy). The `uiStore` persists the preference to `localStorage`. System preference read via `matchMedia('(prefers-color-scheme: dark)')`.
+
+### Dark Mode Tokens
+
+```css
+.dark {
+  --bg-app:         #0f1117;
+  --bg-surface:     #1a1d27;
+  --bg-subtle:      #22263a;
+  --bg-overlay:     rgba(0,0,0,0.6);
+
+  --text-primary:   #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-disabled:  #4b5563;
+
+  --border-default: #2d3148;
+  --border-strong:  #3d4266;
+}
+```
+
+**Dark mode rules:**
+- Never use `bg-white` directly — always use `--bg-surface` token
+- Shadows should be reduced (they disappear in dark; use `border` for elevation instead)
+- Chart colours stay the same hue but increase lightness by 10% for contrast
+- Priority colours stay the same (they're already saturated enough)
+- Images and avatars: no change needed
+
+---
+
+## 11. Accessibility
+
+Target: **WCAG 2.1 AA** compliance.
+
+### Colour Contrast
+- All text on backgrounds must meet 4.5:1 (normal text) or 3:1 (large text / UI components)
+- Test with the [Colour Contrast Analyser](https://www.tpgi.com/color-contrast-checker/) before shipping each component
+- `--text-secondary` on `--bg-surface` must be checked in both light and dark modes
+
+### Focus Management
+- All interactive elements must have a visible focus ring: `outline: 2px solid var(--border-focus); outline-offset: 2px`
+- Never use `outline: none` without a custom replacement
+- Modal open: focus moves to modal; Esc closes modal and returns focus to trigger button
+- Task detail panel open: focus moves to title
+
+### ARIA Roles and Labels
+- Task checkbox: `role="checkbox"` + `aria-checked` + `aria-label="Complete [task title]"`
+- Drag handle: `aria-roledescription="sortable"` + instruction in `aria-describedby`
+- Priority badge: `aria-label="Priority: Urgent"`
+- Notification bell: `aria-label="Notifications (3 unread)"` (updates dynamically)
+- Loading skeletons: `aria-busy="true"` on their container
+- Toast messages: `role="status"` or `role="alert"` depending on urgency
+
+### Keyboard Navigation
+- Tab order follows reading order (sidebar → header → task list → detail panel)
+- Task rows are keyboard-focusable; `Enter` opens detail; `Space` toggles complete
+- Dropdown menus: `↑↓` to navigate, `Enter` to select, `Esc` to close
+- Drag-and-drop has a keyboard alternative: focus a task → `Space` to "pick up" → `↑↓` to move → `Space` to drop
+
+### Screen Reader Considerations
+- Live regions (`aria-live="polite"`) for: real-time updates, toast messages, task complete confirmations
+- `aria-live="assertive"` only for errors
+- Avoid icon-only buttons without `aria-label`
+
+---
+
+## 12. Empty States
+
+Every view must have a thoughtful empty state — not a blank white screen.
+
+| View | Illustration | Headline | Subtext | CTA |
+|------|-------------|---------|---------|-----|
+| Empty project | Clipboard with dashed border | "No tasks yet" | "Add your first task to get started." | "Add task" button |
+| Today (nothing due) | Sun with checkmark | "All clear for today!" | "No tasks due today. Enjoy your day." | — |
+| Upcoming (nothing) | Calendar with star | "Nothing coming up" | "Tasks with due dates will appear here." | "Browse projects" |
+| Search (no results) | Magnifying glass | "No results for '…'" | "Try different keywords or filters." | "Clear filters" |
+| Notifications (none) | Bell with ZZZ | "You're all caught up" | "We'll notify you when something needs attention." | — |
+| Analytics (no data) | Bar chart outline | "No data yet" | "Complete some tasks to see your stats." | "Go to Inbox" |
+
+All illustrations: simple, single-colour SVGs using `--color-primary-200` (light mode) / `--color-primary-800` (dark mode). Size: 80px.
+
+---
+
+## 13. Loading & Skeleton States
+
+Skeletons are preferred over spinners for page-level loads. Spinners are used for button actions.
+
+### Skeleton Patterns
+
+**Task list loading:**
+```
+⟨skeleton: checkbox 16px⟩  ⟨skeleton: title 60% width⟩  ⟨skeleton: badge 48px⟩
+⟨skeleton: checkbox 16px⟩  ⟨skeleton: title 45% width⟩  ⟨skeleton: badge 48px⟩
+⟨skeleton: checkbox 16px⟩  ⟨skeleton: title 72% width⟩  ⟨skeleton: badge 48px⟩
+```
+
+**Detail panel loading:**
+- Title: full-width skeleton at `text-xl` height
+- Properties block: 6 rows of label + value skeletons
+- Comment section: 2 avatar + text block skeletons
+
+**Sidebar loading:**
+- 5 rows of skeleton nav items
+- 3 skeleton project items
+
+### Spinner Usage
+- Used inside buttons when action is in-flight: `<Loader2 className="animate-spin" size={16} />`
+- Button becomes `disabled` + cursor `not-allowed` during load
+- Never show a page-level spinner; always use skeletons instead
+
+### Optimistic Updates
+Tasks are updated immediately in the UI before the API responds. On API error:
+1. Revert the change
+2. Show error toast: "Failed to update task. [Retry]"
+
+---
+
+## 14. Error States
+
+### Field-Level Validation (Forms)
+- Error message appears below the input in `text-danger text-sm`
+- Input border changes to `border-danger`
+- Error icon (AlertCircle) inline at right of input
+- Trigger: on blur (not on keystroke)
+
+### API Error Toast
+- Toast type: destructive (red)
+- Message: human-readable (not raw error codes)
+- "Retry" action where applicable
+- Auto-dismisses after 6 seconds (longer than success toasts)
+
+### Full-Page Error (unexpected crash)
+- React Error Boundary catches render errors
+- Shows a centered error card: "Something went wrong" + "Try refreshing the page" button
+- Reports error to Sentry automatically
+
+### Network Offline Banner
+- A yellow top banner slides down: "You're offline. Changes will sync when you reconnect."
+- Banner disappears automatically when connection is restored
+- Toast confirms: "Back online. Syncing…"
+
+---
+
+## 15. Keyboard Shortcuts
+
+Shown in a shortcuts help modal (`?` key or via Help menu).
+
+| Shortcut | Action |
+|----------|--------|
+| `N` | New task (in current project) |
+| `Ctrl/Cmd + K` | Open command palette |
+| `/` | Focus search input |
+| `?` | Show keyboard shortcuts help |
+| `Enter` | Open selected task detail |
+| `Space` | Toggle task complete (when row focused) |
+| `E` | Edit task title inline (when row focused) |
+| `D` | Set due date (when task detail open) |
+| `P` | Set priority (when task detail open) |
+| `A` | Assign task (when task detail open) |
+| `L` | Add label (when task detail open) |
+| `Backspace` / `Del` | Delete selected task (with confirmation) |
+| `Esc` | Close modal / detail panel / popover |
+| `↑` / `↓` | Move between tasks in list |
+| `Ctrl/Cmd + Z` | Undo last action |
+| `G` then `I` | Go to Inbox |
+| `G` then `T` | Go to Today |
+| `G` then `U` | Go to Upcoming |
+| `G` then `S` | Go to Settings |
+
+---
+
+## 16. Component File Map
+
+Complete list of every UI file and where it lives:
+
+```
+src/
+├── styles/
+│   └── globals.css               ← all CSS tokens + Tailwind base
+│
+├── components/
+│   ├── ui/                       ← shadcn/ui base components (Button, Input, etc.)
+│   │   ├── button.tsx
+│   │   ├── input.tsx
+│   │   ├── textarea.tsx
+│   │   ├── checkbox.tsx
+│   │   ├── badge.tsx
+│   │   ├── avatar.tsx
+│   │   ├── tooltip.tsx
+│   │   ├── popover.tsx
+│   │   ├── dialog.tsx
+│   │   ├── dropdown-menu.tsx
+│   │   ├── select.tsx
+│   │   ├── separator.tsx
+│   │   ├── skeleton.tsx
+│   │   ├── toast.tsx
+│   │   ├── toaster.tsx
+│   │   ├── sheet.tsx
+│   │   ├── progress.tsx
+│   │   ├── switch.tsx
+│   │   ├── calendar.tsx
+│   │   └── command.tsx
+│   │
+│   ├── layout/
+│   │   ├── AppShell.tsx
+│   │   ├── Sidebar.tsx
+│   │   ├── Header.tsx
+│   │   ├── MobileNav.tsx
+│   │   ├── PageContainer.tsx
+│   │   └── SplitView.tsx
+│   │
+│   ├── tasks/
+│   │   ├── TaskList.tsx
+│   │   ├── TaskItem.tsx
+│   │   ├── TaskQuickAdd.tsx
+│   │   ├── TaskForm.tsx
+│   │   ├── TaskDetail.tsx
+│   │   ├── TaskDetailHeader.tsx
+│   │   ├── TaskProperties.tsx
+│   │   ├── SubtaskList.tsx
+│   │   ├── SubtaskItem.tsx
+│   │   ├── PriorityBadge.tsx
+│   │   ├── DueDateBadge.tsx
+│   │   ├── LabelChip.tsx
+│   │   ├── TaskDragOverlay.tsx
+│   │   ├── TaskContextMenu.tsx
+│   │   └── BulkActionBar.tsx
+│   │
+│   ├── projects/
+│   │   ├── ProjectList.tsx
+│   │   ├── ProjectItem.tsx
+│   │   ├── ProjectForm.tsx
+│   │   ├── ProjectHeader.tsx
+│   │   └── ProjectProgress.tsx
+│   │
+│   ├── comments/
+│   │   ├── CommentThread.tsx
+│   │   ├── CommentItem.tsx
+│   │   └── CommentInput.tsx
+│   │
+│   ├── labels/
+│   │   ├── LabelPicker.tsx
+│   │   ├── LabelForm.tsx
+│   │   └── ColorSwatch.tsx
+│   │
+│   ├── auth/
+│   │   ├── LoginForm.tsx
+│   │   ├── RegisterForm.tsx
+│   │   ├── ResetRequestForm.tsx
+│   │   ├── ResetPasswordForm.tsx
+│   │   ├── AuthCard.tsx
+│   │   └── OAuthButtons.tsx
+│   │
+│   ├── notifications/
+│   │   ├── NotificationBell.tsx
+│   │   ├── NotificationPanel.tsx
+│   │   └── NotificationItem.tsx
+│   │
+│   ├── search/
+│   │   ├── CommandPalette.tsx
+│   │   ├── SearchInput.tsx
+│   │   ├── SearchResultItem.tsx
+│   │   ├── FilterBar.tsx
+│   │   └── SortMenu.tsx
+│   │
+│   └── analytics/
+│       ├── CompletionChart.tsx
+│       ├── StatCard.tsx
+│       ├── StreakBadge.tsx
+│       └── OverdueWidget.tsx
+│
+└── pages/
+    ├── auth/
+    │   ├── Login.tsx
+    │   ├── Register.tsx
+    │   ├── ForgotPassword.tsx
+    │   └── ResetPassword.tsx
+    ├── app/
+    │   ├── Inbox.tsx
+    │   ├── Today.tsx
+    │   ├── Upcoming.tsx
+    │   ├── Project.tsx
+    │   ├── Search.tsx
+    │   └── Analytics.tsx
+    └── settings/
+        ├── Profile.tsx
+        ├── Account.tsx
+        ├── Notifications.tsx
+        ├── Appearance.tsx
+        └── Team.tsx
+```
+
+---
+
+*Last updated: June 2026 — To-Do Application UI Plan*

@@ -1,7 +1,7 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjects } from '../../hooks/useProjects';
-import { Folder, LogOut, Plus, Tag, Calendar, Clock, BarChart, Sun, Moon } from 'lucide-react';
+import { Folder, LogOut, Plus, Tag, Calendar, Clock, BarChart, Sun, Moon, Inbox, Settings, Bell, Search, LayoutTemplate, MoreHorizontal } from 'lucide-react';
 import { LabelManagerModal } from '../labels/LabelManagerModal';
 import { TemplatesModal } from '../tasks/TemplatesModal';
 import { useState } from 'react';
@@ -11,6 +11,8 @@ import { useSocketSync } from '../../hooks/useSocketSync';
 import { useWorkspaceStore } from '../../hooks/useWorkspaces';
 import { useNetworkSync } from '../../hooks/useNetworkSync';
 import { useDarkMode } from '../../hooks/useDarkMode';
+import { cn } from '../../lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const AppLayout = () => {
   useSocketSync();
@@ -19,7 +21,8 @@ export const AppLayout = () => {
   const { user, logout } = useAuthStore();
   const { activeWorkspaceId } = useWorkspaceStore();
   const navigate = useNavigate();
-  const { data: projects, isLoading, createProject, isCreating } = useProjects(activeWorkspaceId || undefined);
+  const location = useLocation();
+  const { data: projects, isLoading, createProject } = useProjects(activeWorkspaceId || undefined);
   const [showLabelModal, setShowLabelModal] = useState(false);
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
 
@@ -39,19 +42,43 @@ export const AppLayout = () => {
     }
   };
 
+  const NavItem = ({ to, icon: Icon, label, badge }: { to: string, icon: any, label: string, badge?: number }) => {
+    const isActive = location.pathname === to;
+    return (
+      <Link 
+        to={to} 
+        className={cn(
+          "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all group",
+          isActive 
+            ? "bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300" 
+            : "text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]"
+        )}
+      >
+        <Icon className={cn(
+          "mr-3 flex-shrink-0 h-4 w-4",
+          isActive ? "text-primary-600 dark:text-primary-400" : "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"
+        )} />
+        <span className="flex-1 truncate">{label}</span>
+        {badge !== undefined && (
+          <span className={cn(
+            "ml-3 inline-block py-0.5 px-2 text-xs font-medium rounded-full",
+            isActive ? "bg-primary-100 text-primary-700 dark:bg-primary-800 dark:text-primary-300" : "bg-[var(--bg-subtle)] text-[var(--text-secondary)]"
+          )}>
+            {badge}
+          </span>
+        )}
+      </Link>
+    );
+  };
+
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-[var(--bg-app)] overflow-hidden">
       {/* Sidebar */}
-      <div className="w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex flex-col">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex flex-col gap-2 z-40">
+      <div className="w-64 flex-shrink-0 border-r border-[var(--border-default)] bg-[var(--bg-surface)] flex flex-col z-20">
+        {/* Header/WorkspaceSwitcher Area */}
+        <div className="p-4 flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">FlowBoard</h1>
-            <div className="flex items-center gap-2">
-              <button onClick={toggleDarkMode} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-              <NotificationTray />
-            </div>
+            <WorkspaceSwitcher />
           </div>
           {!isOnline && (
             <div className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 text-center">
@@ -65,113 +92,97 @@ export const AppLayout = () => {
           )}
         </div>
         
-        <WorkspaceSwitcher />
-        
-        <div className="flex-1 overflow-y-auto p-4 pt-0">
-          <div className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Views</h2>
-            <nav className="space-y-1">
-              <Link to="/today" className="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
-                <Clock className="mr-3 flex-shrink-0 h-5 w-5 text-indigo-500" />
-                Today
-              </Link>
-              <Link to="/upcoming" className="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
-                <Calendar className="mr-3 flex-shrink-0 h-5 w-5 text-indigo-500" />
-                Upcoming
-              </Link>
-              <Link to="/analytics" className="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100">
-                <BarChart className="mr-3 flex-shrink-0 h-5 w-5 text-indigo-500" />
-                Analytics
-              </Link>
-            </nav>
+        {/* Nav Links */}
+        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-6">
+          <div className="space-y-1">
+            <NavItem to="/" icon={Inbox} label="Inbox" badge={3} />
+            <NavItem to="/today" icon={Sun} label="Today" badge={5} />
+            <NavItem to="/upcoming" icon={Calendar} label="Upcoming" />
+            <NavItem to="/search" icon={Search} label="Search" />
           </div>
 
-          <div className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Workspace Tools</h2>
-            <nav className="space-y-1">
-              <button 
-                onClick={() => setShowLabelModal(true)}
-                className="w-full flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
-              >
-                <Tag className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400" />
-                Labels
+          {/* Projects */}
+          <div>
+            <div className="flex items-center justify-between px-3 mb-2">
+              <h2 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Projects</h2>
+              <button onClick={handleCreateProject} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+                <Plus className="h-4 w-4" />
               </button>
-              <button 
-                onClick={() => {
-                  if(!activeWorkspaceId) alert('Select workspace first');
-                  else setShowTemplatesModal(true);
-                }}
-                className="w-full flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
-              >
-                <Plus className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400" />
-                Templates
-              </button>
-            </nav>
-          </div>
-
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Projects</h2>
-            <button 
-              onClick={handleCreateProject}
-              disabled={isCreating}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <Plus size={18} />
-            </button>
-          </div>
-          
-          <nav className="space-y-1">
-            {isLoading ? (
-              <div className="text-sm text-gray-500">Loading projects...</div>
-            ) : projects?.length === 0 ? (
-              <div className="text-sm text-gray-500 italic">No projects yet.</div>
-            ) : (
-              projects?.map((project) => (
-                <Link
-                  key={project.id}
-                  to={`/projects/${project.id}`}
-                  className="flex items-center px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
+            </div>
+            <div className="space-y-1">
+              {projects?.map(project => (
+                <Link 
+                  key={project.id} 
+                  to={`/project/${project.id}`} 
+                  className={cn(
+                    "flex items-center px-3 py-2 text-sm font-medium rounded-lg text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)] transition-colors group"
+                  )}
                 >
-                  <Folder className="mr-3 flex-shrink-0 h-5 w-5 text-gray-400" />
-                  {project.name}
+                  <span className="w-2 h-2 rounded-full bg-primary-500 mr-3" />
+                  <span className="flex-1 truncate">{project.name}</span>
                 </Link>
-              ))
-            )}
-          </nav>
-        </div>
-
-        <div className="p-4 border-t border-gray-200">
-          <button
-            onClick={() => setShowLabelModal(true)}
-            className="flex items-center w-full px-2 py-2 mb-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
-          >
-            <Tag className="mr-3 h-5 w-5 text-gray-400" />
-            Manage Labels
-          </button>
-          
-          <div className="flex items-center mb-4 mt-4">
-            <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
-              {user?.name?.[0]?.toUpperCase()}
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-700">{user?.name}</p>
+              ))}
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full px-2 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100"
-          >
-            <LogOut className="mr-3 h-5 w-5 text-gray-400" />
-            Logout
-          </button>
+
+          {/* Labels & Templates */}
+          <div>
+            <h2 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider px-3 mb-2">Workspace Tools</h2>
+            <div className="space-y-1">
+              <button onClick={() => setShowLabelModal(true)} className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)] transition-colors">
+                <Tag className="mr-3 h-4 w-4" /> Labels
+              </button>
+              <button onClick={() => setShowTemplatesModal(true)} className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)] transition-colors">
+                <LayoutTemplate className="mr-3 h-4 w-4" /> Templates
+              </button>
+              <Link to="/analytics" className="w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)] transition-colors">
+                <BarChart className="mr-3 h-4 w-4" /> Analytics
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* User Footer */}
+        <div className="p-4 border-t border-[var(--border-default)]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 truncate">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary-500 to-primary-300 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                {user?.name?.[0]?.toUpperCase() || 'U'}
+              </div>
+              <span className="text-sm font-medium text-[var(--text-primary)] truncate">{user?.name}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button onClick={toggleDarkMode} className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-subtle)] rounded-md transition-colors">
+                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
+              <button onClick={handleLogout} className="p-1.5 text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors">
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <Outlet />
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 bg-[var(--bg-app)] relative">
+        {/* Main Header */}
+        <header className="h-14 flex items-center justify-between px-6 border-b border-[var(--border-default)] bg-[var(--bg-surface)]">
+          <div className="flex items-center gap-4">
+            {/* Placeholder for page title */}
+          </div>
+          <div className="flex items-center gap-4">
+            <button className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+              <Search className="h-5 w-5" />
+            </button>
+            <NotificationTray />
+          </div>
+        </header>
+        <main className="flex-1 overflow-auto">
+          <Outlet />
+        </main>
       </div>
 
+      {/* Modals */}
       {showLabelModal && <LabelManagerModal onClose={() => setShowLabelModal(false)} />}
       {showTemplatesModal && <TemplatesModal onClose={() => setShowTemplatesModal(false)} />}
     </div>

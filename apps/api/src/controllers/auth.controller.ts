@@ -39,6 +39,7 @@ export class AuthController {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: (error as any).errors });
       }
+      console.error('Register error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -68,6 +69,7 @@ export class AuthController {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: (error as any).errors });
       }
+      console.error('Login error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
