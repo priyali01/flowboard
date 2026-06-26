@@ -12,6 +12,13 @@ jest.mock('../db', () => ({
       delete: jest.fn(),
       findUnique: jest.fn(),
     },
+    workspace: {
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    workspaceMember: {
+      findUnique: jest.fn(),
+    }
   },
 }));
 

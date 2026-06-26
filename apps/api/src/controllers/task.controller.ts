@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../db';
 import { z } from 'zod';
 import { socketService } from '../services/socket.service';
+import { verifyProjectAccess } from '../utils/permissions';
 
 const createTaskSchema = z.object({
   title: z.string().min(1).max(255),
@@ -11,18 +12,19 @@ const createTaskSchema = z.object({
   dueDate: z.string().datetime().optional().nullable(),
   parentId: z.string().uuid().optional().nullable(),
   labelIds: z.array(z.string().uuid()).optional(),
-  position: z.number().int().optional(),
+  position: z.number().optional(),
+  assigneeId: z.string().uuid().optional().nullable(),
 });
 
 const reorderTasksSchema = z.object({
   tasks: z.array(z.object({
     id: z.string().uuid(),
-    position: z.number().int()
+    position: z.number()
   }))
 });
 
 const buildTaskFilter = (req: Request) => {
-  const { search, status, priority, labelId, dueDateStart, dueDateEnd } = req.query;
+  const { search, status, priority, labelId, dueDateStart, dueDateEnd, assigneeId } = req.query;
   const where: any = {};
 
   if (search) {
@@ -33,6 +35,7 @@ const buildTaskFilter = (req: Request) => {
   }
   if (status) where.status = String(status);
   if (priority) where.priority = String(priority);
+  if (assigneeId) where.assigneeId = String(assigneeId);
   if (labelId) {
     where.labels = { some: { id: String(labelId) } };
   }
@@ -49,7 +52,7 @@ const buildTaskSort = (req: Request): any => {
   if (sortBy) {
     return { [String(sortBy)]: sortOrder === 'desc' ? 'desc' : 'asc' };
   }
-  return { position: 'asc' }; // Default by position
+  return { position: 'asc' };
 };
 
 export class TaskController {
@@ -58,17 +61,15 @@ export class TaskController {
       const userId = (req as any).user.userId;
       const projectId = String(req.params.projectId);
 
-      const project = await prisma.project.findUnique({ where: { id: projectId } });
-      if (!project || project.ownerId !== userId) {
-        return res.status(404).json({ error: 'Project not found' });
-      }
+      const hasAccess = await verifyProjectAccess(projectId, userId);
+      if (!hasAccess) return res.status(403).json({ error: 'Not authorized' });
 
       const where = { ...buildTaskFilter(req), projectId };
       const orderBy = buildTaskSort(req);
 
       const tasks = await prisma.task.findMany({
         where,
-        include: { labels: true, project: true },
+        include: { labels: true, project: true, assignee: { select: { id: true, name: true, avatarUrl: true } } },
         orderBy,
       });
       res.json(tasks);
@@ -81,26 +82,32 @@ export class TaskController {
     try {
       const userId = (req as any).user.userId;
       const projectId = String(req.params.projectId);
-      const { labelIds, ...data } = createTaskSchema.parse(req.body);
+      const { labelIds, assigneeId, ...data } = createTaskSchema.parse(req.body);
 
-      const project = await prisma.project.findUnique({ where: { id: projectId } });
-      if (!project || project.ownerId !== userId) {
-        return res.status(404).json({ error: 'Project not found' });
-      }
+      const hasAccess = await verifyProjectAccess(projectId, userId, true);
+      if (!hasAccess) return res.status(403).json({ error: 'Not authorized' });
 
       const task = await prisma.task.create({
         data: {
           ...data,
           projectId,
+          assigneeId,
           ...(labelIds ? { labels: { connect: labelIds.map(id => ({ id })) } } : {}),
           activities: {
             create: { userId, action: 'CREATED' }
           }
         },
-        include: { labels: true }
+        include: { labels: true, assignee: { select: { id: true, name: true, avatarUrl: true } } }
       });
 
       socketService.emitToUser(userId, 'task_created', task);
+      
+      if (assigneeId && assigneeId !== userId) {
+        await prisma.notification.create({
+          data: { userId: assigneeId, message: `You have been assigned to task: ${task.title}` }
+        });
+        socketService.emitToUser(assigneeId, 'new_notification', {});
+      }
 
       res.status(201).json(task);
     } catch (error: any) {
@@ -115,16 +122,19 @@ export class TaskController {
     try {
       const userId = (req as any).user.userId;
       const id = String(req.params.id);
-      const { labelIds, ...data } = createTaskSchema.partial().parse(req.body);
+      const { labelIds, assigneeId, ...data } = createTaskSchema.partial().parse(req.body);
 
-      const task = await prisma.task.findUnique({ where: { id }, include: { project: true } });
-      if (!task || task.project.ownerId !== userId) {
-        return res.status(404).json({ error: 'Task not found' });
-      }
+      const task = await prisma.task.findUnique({ where: { id } });
+      if (!task) return res.status(404).json({ error: 'Task not found' });
+
+      const hasAccess = await verifyProjectAccess(task.projectId, userId, true);
+      if (!hasAccess) return res.status(403).json({ error: 'Not authorized' });
 
       const activitiesToCreate = [];
       if (data.status && data.status !== task.status) {
         activitiesToCreate.push({ userId, action: 'STATUS_CHANGED', oldValue: task.status, newValue: data.status });
+      } else if (assigneeId !== undefined && assigneeId !== task.assigneeId) {
+        activitiesToCreate.push({ userId, action: 'ASSIGNED', newValue: assigneeId || 'unassigned' });
       } else {
         activitiesToCreate.push({ userId, action: 'UPDATED' });
       }
@@ -133,12 +143,13 @@ export class TaskController {
         where: { id },
         data: {
           ...data,
+          assigneeId: assigneeId === null ? null : (assigneeId || undefined),
           ...(labelIds ? { labels: { set: labelIds.map(id => ({ id })) } } : {}),
           activities: {
             create: activitiesToCreate
           }
         },
-        include: { labels: true }
+        include: { labels: true, assignee: { select: { id: true, name: true, avatarUrl: true } } }
       });
 
       if (data.status && data.status !== task.status) {
@@ -148,7 +159,17 @@ export class TaskController {
         socketService.emitToUser(userId, 'new_notification', {});
       }
 
+      if (assigneeId && assigneeId !== task.assigneeId && assigneeId !== userId) {
+        await prisma.notification.create({
+          data: { userId: assigneeId, message: `You have been assigned to task: ${task.title}` }
+        });
+        socketService.emitToUser(assigneeId, 'new_notification', {});
+      }
+
       socketService.emitToUser(userId, 'task_updated', updatedTask);
+      if (updatedTask.assigneeId && updatedTask.assigneeId !== userId) {
+        socketService.emitToUser(updatedTask.assigneeId, 'task_updated', updatedTask);
+      }
 
       res.json(updatedTask);
     } catch (error: any) {
@@ -164,10 +185,11 @@ export class TaskController {
       const userId = (req as any).user.userId;
       const id = String(req.params.id);
 
-      const task = await prisma.task.findUnique({ where: { id }, include: { project: true } });
-      if (!task || task.project.ownerId !== userId) {
-        return res.status(404).json({ error: 'Task not found' });
-      }
+      const task = await prisma.task.findUnique({ where: { id } });
+      if (!task) return res.status(404).json({ error: 'Task not found' });
+
+      const hasAccess = await verifyProjectAccess(task.projectId, userId, true);
+      if (!hasAccess) return res.status(403).json({ error: 'Not authorized' });
 
       await prisma.task.delete({ where: { id } });
 
@@ -182,12 +204,24 @@ export class TaskController {
   async getAllTasks(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId;
-      const where = { ...buildTaskFilter(req), project: { ownerId: userId } };
+      
+      const projects = await prisma.project.findMany({
+        where: {
+          OR: [
+            { ownerId: userId },
+            { workspace: { members: { some: { userId } } } }
+          ]
+        },
+        select: { id: true }
+      });
+      const projectIds = projects.map(p => p.id);
+
+      const where = { ...buildTaskFilter(req), projectId: { in: projectIds } };
       const orderBy = buildTaskSort(req);
 
       const tasks = await prisma.task.findMany({
         where,
-        include: { labels: true, project: true },
+        include: { labels: true, project: true, assignee: { select: { id: true, name: true, avatarUrl: true } } },
         orderBy,
       });
       res.json(tasks);
@@ -200,19 +234,16 @@ export class TaskController {
     try {
       const userId = (req as any).user.userId;
       const projectId = String(req.params.projectId);
-      const data = reorderTasksSchema.parse(req.body);
+      const { tasks } = reorderTasksSchema.parse(req.body);
 
-      const project = await prisma.project.findUnique({ where: { id: projectId } });
-      if (!project || project.ownerId !== userId) {
-        return res.status(404).json({ error: 'Project not found' });
-      }
+      const hasAccess = await verifyProjectAccess(projectId, userId, true);
+      if (!hasAccess) return res.status(403).json({ error: 'Not authorized' });
 
-      // Update positions in a transaction
       await prisma.$transaction(
-        data.tasks.map((task) =>
+        tasks.map((t) => 
           prisma.task.update({
-            where: { id: task.id },
-            data: { position: task.position },
+            where: { id: t.id },
+            data: { position: t.position }
           })
         )
       );

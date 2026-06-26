@@ -5,13 +5,16 @@ import { Folder, LogOut, Plus, Tag, Calendar, Clock } from 'lucide-react';
 import { LabelManagerModal } from '../labels/LabelManagerModal';
 import { useState } from 'react';
 import { NotificationTray } from './NotificationTray';
+import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 import { useSocketSync } from '../../hooks/useSocketSync';
+import { useWorkspaceStore } from '../../hooks/useWorkspaces';
 
 export const AppLayout = () => {
   useSocketSync();
   const { user, logout } = useAuthStore();
+  const { activeWorkspaceId } = useWorkspaceStore();
   const navigate = useNavigate();
-  const { data: projects, isLoading, createProject, isCreating } = useProjects();
+  const { data: projects, isLoading, createProject, isCreating } = useProjects(activeWorkspaceId || undefined);
   const [showLabelModal, setShowLabelModal] = useState(false);
 
   const handleLogout = () => {
@@ -20,9 +23,13 @@ export const AppLayout = () => {
   };
 
   const handleCreateProject = () => {
+    if (!activeWorkspaceId) {
+      alert("Please select a workspace first.");
+      return;
+    }
     const name = prompt('Enter project name:');
     if (name) {
-      createProject({ name });
+      createProject({ name, workspaceId: activeWorkspaceId });
     }
   };
 
@@ -35,7 +42,9 @@ export const AppLayout = () => {
           <NotificationTray />
         </div>
         
-        <div className="flex-1 overflow-y-auto p-4">
+        <WorkspaceSwitcher />
+        
+        <div className="flex-1 overflow-y-auto p-4 pt-0">
           <div className="mb-6">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Views</h2>
             <nav className="space-y-1">

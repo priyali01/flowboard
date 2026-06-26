@@ -43,6 +43,8 @@ export interface Task {
   position: number;
   labels?: Label[];
   subtasks?: Task[];
+  assigneeId?: string | null;
+  assignee?: { id: string; name: string; avatarUrl: string | null } | null;
   createdAt: string;
   updatedAt: string;
 }

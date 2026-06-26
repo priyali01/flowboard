@@ -14,6 +14,13 @@ jest.mock('../db', () => ({
     },
     project: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
+    },
+    workspaceMember: {
+      findUnique: jest.fn(),
+    },
+    notification: {
+      create: jest.fn(),
     }
   },
 }));

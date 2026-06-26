@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import type { Task } from '../../api/client';
 import { useTasks } from '../../hooks/useTasks';
 import { useLabels } from '../../hooks/useLabels';
-import { X, Flag, Tag, CheckCircle, Circle, Plus, Trash2, MessageSquare, Activity as ActivityIcon, CheckSquare } from 'lucide-react';
+import { X, Flag, Tag, CheckCircle, Circle, Plus, Trash2, MessageSquare, Activity as ActivityIcon, CheckSquare, User } from 'lucide-react';
 import classNames from 'classnames';
+import { useWorkspaces, useWorkspaceStore } from '../../hooks/useWorkspaces';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { CommentThread } from '../comments/CommentThread';
@@ -22,6 +23,10 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({ task, projectI
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [activeTab, setActiveTab] = useState<'SUBTASKS' | 'COMMENTS' | 'ACTIVITY'>('SUBTASKS');
+
+  const { data: workspaces } = useWorkspaces();
+  const { activeWorkspaceId } = useWorkspaceStore();
+  const activeWorkspace = workspaces?.find(w => w.id === activeWorkspaceId) || workspaces?.[0];
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -106,7 +111,24 @@ export const TaskDetailPanel: React.FC<TaskDetailPanelProps> = ({ task, projectI
           <h2 className="text-xl font-bold text-gray-900">{task.title}</h2>
 
           {/* Meta properties */}
-          <div className="grid grid-cols-3 gap-y-4 text-sm text-gray-500">
+          <div className="grid grid-cols-3 gap-y-4 text-sm text-gray-500 items-center">
+            
+            <div className="flex items-center"><User size={16} className="mr-2" /> Assignee</div>
+            <div className="col-span-2">
+              <select 
+                value={task.assigneeId || ''}
+                onChange={(e) => updateTask({ id: task.id, assigneeId: e.target.value || null })}
+                className="border-none bg-transparent focus:ring-0 p-0 font-medium cursor-pointer hover:bg-gray-50 rounded"
+              >
+                <option value="">Unassigned</option>
+                {activeWorkspace?.members.map(member => (
+                  <option key={member.user.id} value={member.user.id}>
+                    {member.user.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex items-center"><Flag size={16} className="mr-2" /> Priority</div>
             <div className="col-span-2">
               <select 

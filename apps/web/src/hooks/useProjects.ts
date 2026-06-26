@@ -2,19 +2,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import type { Project } from '../api/client';
 
-export const useProjects = () => {
+export const useProjects = (workspaceId?: string) => {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['projects'],
+    queryKey: ['projects', workspaceId],
     queryFn: async (): Promise<Project[]> => {
-      const { data } = await apiClient.get('/projects');
+      const url = workspaceId ? `/projects?workspaceId=${workspaceId}` : '/projects';
+      const { data } = await apiClient.get(url);
       return data;
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: async (newProject: { name: string; color?: string; icon?: string }) => {
+    mutationFn: async (newProject: { name: string; color?: string; icon?: string; workspaceId?: string }) => {
       const { data } = await apiClient.post('/projects', newProject);
       return data;
     },
