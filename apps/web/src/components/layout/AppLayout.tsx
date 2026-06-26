@@ -9,9 +9,11 @@ import { NotificationTray } from './NotificationTray';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 import { useSocketSync } from '../../hooks/useSocketSync';
 import { useWorkspaceStore } from '../../hooks/useWorkspaces';
+import { useNetworkSync } from '../../hooks/useNetworkSync';
 
 export const AppLayout = () => {
   useSocketSync();
+  const { isOnline, isSyncing } = useNetworkSync();
   const { user, logout } = useAuthStore();
   const { activeWorkspaceId } = useWorkspaceStore();
   const navigate = useNavigate();
@@ -39,9 +41,21 @@ export const AppLayout = () => {
     <div className="flex h-screen bg-white">
       {/* Sidebar */}
       <div className="w-64 flex-shrink-0 border-r border-gray-200 bg-gray-50 flex flex-col">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between z-40">
-          <h1 className="text-xl font-bold text-gray-900">FlowBoard</h1>
-          <NotificationTray />
+        <div className="p-4 border-b border-gray-200 flex flex-col gap-2 z-40">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-gray-900">FlowBoard</h1>
+            <NotificationTray />
+          </div>
+          {!isOnline && (
+            <div className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 text-center">
+              Offline Mode
+            </div>
+          )}
+          {isSyncing && (
+            <div className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-md border border-blue-200 text-center">
+              Syncing changes...
+            </div>
+          )}
         </div>
         
         <WorkspaceSwitcher />

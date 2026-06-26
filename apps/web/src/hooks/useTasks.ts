@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import type { Task } from '../api/client';
+import { addToQueue } from '../utils/offlineQueue';
 
 export const useTasks = (projectId: string, filters: Record<string, string> = {}) => {
   const queryClient = useQueryClient();
@@ -20,6 +21,15 @@ export const useTasks = (projectId: string, filters: Record<string, string> = {}
 
   const createMutation = useMutation({
     mutationFn: async (newTask: { projectId: string; title: string; status?: string; priority?: string; parentId?: string; labelIds?: string[]; assigneeId?: string | null }) => {
+      if (!navigator.onLine) {
+        await addToQueue({
+          url: `/projects/${newTask.projectId}/tasks`,
+          method: 'POST',
+          body: newTask
+        });
+        // Optimistic mock return
+        return { ...newTask, id: 'temp-' + Date.now(), createdAt: new Date().toISOString() } as any;
+      }
       const { data } = await apiClient.post(`/projects/${newTask.projectId}/tasks`, newTask);
       return data;
     },
@@ -30,6 +40,14 @@ export const useTasks = (projectId: string, filters: Record<string, string> = {}
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Task> & { id: string; labelIds?: string[]; assigneeId?: string | null }) => {
+      if (!navigator.onLine) {
+        await addToQueue({
+          url: `/tasks/${id}`,
+          method: 'PATCH',
+          body: updates
+        });
+        return { id, ...updates } as any;
+      }
       const { data } = await apiClient.patch(`/tasks/${id}`, updates);
       return data;
     },
@@ -40,6 +58,13 @@ export const useTasks = (projectId: string, filters: Record<string, string> = {}
 
   const deleteMutation = useMutation({
     mutationFn: async ({ id }: { id: string; projectId: string }) => {
+      if (!navigator.onLine) {
+        await addToQueue({
+          url: `/tasks/${id}`,
+          method: 'DELETE'
+        });
+        return;
+      }
       await apiClient.delete(`/tasks/${id}`);
     },
     onSuccess: () => {
