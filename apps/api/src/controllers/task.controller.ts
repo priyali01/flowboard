@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../db';
 import { z } from 'zod';
+import { socketService } from '../services/socket.service';
 
 const createTaskSchema = z.object({
   title: z.string().min(1).max(255),
@@ -99,6 +100,8 @@ export class TaskController {
         include: { labels: true }
       });
 
+      socketService.emitToUser(userId, 'task_created', task);
+
       res.status(201).json(task);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -138,6 +141,15 @@ export class TaskController {
         include: { labels: true }
       });
 
+      if (data.status && data.status !== task.status) {
+        await prisma.notification.create({
+          data: { userId, message: `Task "${task.title}" status changed to ${data.status}` }
+        });
+        socketService.emitToUser(userId, 'new_notification', {});
+      }
+
+      socketService.emitToUser(userId, 'task_updated', updatedTask);
+
       res.json(updatedTask);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -158,6 +170,9 @@ export class TaskController {
       }
 
       await prisma.task.delete({ where: { id } });
+
+      socketService.emitToUser(userId, 'task_deleted', { id });
+
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete task' });
@@ -202,7 +217,9 @@ export class TaskController {
         )
       );
 
-      res.status(200).json({ message: 'Tasks reordered' });
+      socketService.emitToUser(userId, 'task_reordered', {});
+
+      res.json({ message: 'Tasks reordered successfully' });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.issues });

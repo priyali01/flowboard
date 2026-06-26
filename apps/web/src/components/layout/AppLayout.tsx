@@ -4,8 +4,11 @@ import { useProjects } from '../../hooks/useProjects';
 import { Folder, LogOut, Plus, Tag, Calendar, Clock } from 'lucide-react';
 import { LabelManagerModal } from '../labels/LabelManagerModal';
 import { useState } from 'react';
+import { NotificationTray } from './NotificationTray';
+import { useSocketSync } from '../../hooks/useSocketSync';
 
 export const AppLayout = () => {
+  useSocketSync();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const { data: projects, isLoading, createProject, isCreating } = useProjects();
@@ -27,8 +30,9 @@ export const AppLayout = () => {
     <div className="flex h-screen bg-white">
       {/* Sidebar */}
       <div className="w-64 flex-shrink-0 border-r border-gray-200 bg-gray-50 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between z-40">
           <h1 className="text-xl font-bold text-gray-900">FlowBoard</h1>
+          <NotificationTray />
         </div>
         
         <div className="flex-1 overflow-y-auto p-4">

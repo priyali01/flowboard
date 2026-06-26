@@ -91,7 +91,7 @@ npm run test
 - [x] **Stage 3:** Advanced Task Details, Subtasks, & Labels
 - [x] **Stage 4:** Search, Filtering, Sorting & Drag-and-Drop
 - [x] **Stage 5:** Comments, Attachments & Activity History
-- [ ] **Stage 6:** Real-time Updates & Notifications
+- [x] **Stage 6:** Real-time Updates & Notifications
 
 ## 📝 License
 MIT License
