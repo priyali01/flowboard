@@ -1,28 +1,10 @@
-import { useEffect, useState } from 'react';
-
+// Light mode only — dark mode is disabled
 export function useDarkMode() {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('flowboard-dark-mode');
-      if (stored !== null) {
-        return stored === 'true';
-      }
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
+  // Force light mode always — remove any stored dark mode preference
+  if (typeof window !== 'undefined') {
+    window.document.documentElement.classList.remove('dark');
+    localStorage.removeItem('flowboard-dark-mode');
+  }
 
-  useEffect(() => {
-    const root = window.document.documentElement;
-    if (isDarkMode) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    localStorage.setItem('flowboard-dark-mode', String(isDarkMode));
-  }, [isDarkMode]);
-
-  const toggleDarkMode = () => setIsDarkMode(prev => !prev);
-
-  return { isDarkMode, toggleDarkMode };
+  return { isDarkMode: false, toggleDarkMode: () => {} };
 }

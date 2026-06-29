@@ -4,46 +4,72 @@ import { TaskDetail } from '../../components/tasks/TaskDetail';
 import type { TaskItemProps } from '../../components/tasks/TaskItem';
 import { useTasks } from '../../hooks/useTasks';
 import { useProjects } from '../../hooks/useProjects';
-import { useAuthStore } from '../../stores/authStore';
-import { Folder, Calendar, Clock, CheckCircle, TrendingUp, Flag, Tag, Bell, Send } from 'lucide-react';
+import {
+  CheckSquare, RefreshCw, AlertCircle, TrendingUp,
+  ChevronRight, MoreHorizontal, Plus
+} from 'lucide-react';
 import { cn } from '../../lib/utils';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
+  PieChart, Pie, Cell, Tooltip, Legend
+} from 'recharts';
 
-const WavyCard = ({ title, value, subtitle, icon: Icon, color, waveColor }: any) => {
-  return (
-    <div className="relative bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-3xl p-5 shadow-soft border border-white/60 dark:border-gray-700/50 overflow-hidden group hover:-translate-y-1 transition-transform">
-      <div className="flex items-center gap-4 mb-4 z-10 relative">
-        <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center", color.bg, color.text)}>
-          <Icon size={20} />
-        </div>
-        <div>
-          <h3 className="text-[13px] font-bold text-gray-400 dark:text-gray-500">{title}</h3>
-        </div>
+// ── Stat Card ──────────────────────────────────────────────────────────────
+const StatCard = ({ title, value, change, changePositive, icon: Icon, iconBg, iconColor }: any) => (
+  <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-[var(--border-default)] hover:shadow-md transition-shadow">
+    <div className="flex items-center justify-between mb-3">
+      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{title}</p>
+      <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center', iconBg)}>
+        <Icon size={18} className={iconColor} />
       </div>
-      <div className="z-10 relative">
-        <div className="text-3xl font-black text-[var(--text-primary)] mb-1">{value}</div>
-        <div className="text-[11px] font-bold text-gray-400">{subtitle}</div>
-      </div>
-      
-      {/* Wavy Background (CSS generated or simplified SVG) */}
-      <div className="absolute bottom-0 left-0 right-0 h-16 opacity-30 pointer-events-none transition-transform group-hover:scale-105" 
-           style={{
-             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='${encodeURIComponent(waveColor)}' fill-opacity='1' d='M0,256L48,229.3C96,203,192,149,288,154.7C384,160,480,224,576,218.7C672,213,768,139,864,128C960,117,1056,171,1152,197.3C1248,224,1344,224,1392,224L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E")`,
-             backgroundSize: 'cover',
-             backgroundPosition: 'bottom'
-           }}
-      />
     </div>
-  );
-};
+    <p className="text-3xl font-black text-gray-900 dark:text-white mb-1">{value}</p>
+    {change !== undefined && (
+      <p className={cn('text-xs font-semibold', changePositive ? 'text-green-500' : 'text-red-500')}>
+        {changePositive ? '+' : ''}{change}% from last week
+      </p>
+    )}
+  </div>
+);
+
+// ── Days for bar chart ─────────────────────────────────────────────────────
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export const Inbox = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'All' | 'To Do' | 'In Progress' | 'Done'>('All');
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const { user } = useAuthStore();
 
   const { data: tasks, isLoading, createTask, updateTask, reorderTasks } = useTasks('global');
   const { data: projects } = useProjects();
   const defaultProjectId = projects?.[0]?.id;
+
+  const totalTasks = tasks?.length || 0;
+  const completedTasks = tasks?.filter(t => t.status === 'DONE').length || 0;
+  const inProgressTasks = tasks?.filter(t => t.status === 'IN_PROGRESS').length || 0;
+  const overdueTasks = tasks?.filter(t => {
+    if (!t.dueDate || t.status === 'DONE') return false;
+    return new Date(t.dueDate) < new Date();
+  }).length || 0;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  // ── Bar chart data (mock weekly distribution) ──────────────────────────
+  const barData = DAYS.map((day, i) => ({
+    day,
+    Completed: Math.max(0, Math.floor((completedTasks / 7) * (0.5 + Math.sin(i) * 0.5 + 0.5))),
+    'In Progress': Math.max(0, Math.floor((inProgressTasks / 7) * (0.5 + Math.cos(i) * 0.5 + 0.5))),
+    Overdue: Math.max(0, Math.floor((overdueTasks / 7) * (0.3 + Math.sin(i * 2) * 0.3 + 0.3))),
+  }));
+
+  // ── Donut chart data ───────────────────────────────────────────────────
+  const donutData = [
+    { name: 'Completed', value: completedTasks || 0, color: '#6366f1' },
+    { name: 'In Progress', value: inProgressTasks || 0, color: '#f59e0b' },
+    { name: 'Overdue', value: overdueTasks || 0, color: '#ef4444' },
+  ].filter(d => d.value > 0);
+
+  // If no tasks, add a placeholder
+  const donutDisplay = donutData.length > 0 ? donutData : [{ name: 'No Tasks', value: 1, color: '#e2e8f0' }];
 
   const handleToggle = (id: string, completed: boolean) => {
     updateTask({ id, status: completed ? 'DONE' : 'TODO' });
@@ -51,11 +77,7 @@ export const Inbox = () => {
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskTitle.trim()) return;
-    if (!defaultProjectId) {
-      alert("No project available to create a task in.");
-      return;
-    }
+    if (!newTaskTitle.trim() || !defaultProjectId) return;
     createTask({ title: newTaskTitle, projectId: defaultProjectId, status: 'TODO', priority: 'MEDIUM' });
     setNewTaskTitle('');
   };
@@ -68,115 +90,210 @@ export const Inbox = () => {
 
   const selectedTask = tasks?.find(t => t.id === selectedTaskId) || null;
 
+  const filteredTasks = tasks?.filter(t => {
+    if (activeTab === 'All') return true;
+    if (activeTab === 'To Do') return t.status === 'TODO';
+    if (activeTab === 'In Progress') return t.status === 'IN_PROGRESS';
+    if (activeTab === 'Done') return t.status === 'DONE';
+    return true;
+  }) || [];
+
+  const tabs = ['All', 'To Do', 'In Progress', 'Done'] as const;
+
   return (
-    <div className="w-full relative">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">Good Morning, {user?.name?.split(' ')[0] || 'There'}! 👋</h1>
-          <p className="text-[var(--text-secondary)] font-medium mt-1">Let's make today productive</p>
-        </div>
-      </div>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-5 gap-4 mb-8">
-        <WavyCard 
-          title="Total Tasks" 
-          value={tasks?.length || 0} 
-          subtitle="All Time" 
-          icon={Folder} 
-          color={{ bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-600' }} 
-          waveColor="#9333ea" 
+    <div className="space-y-6">
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-4 gap-4">
+        <StatCard
+          title="Total Tasks"
+          value={totalTasks}
+          change={12}
+          changePositive={true}
+          icon={CheckSquare}
+          iconBg="bg-primary-50 dark:bg-primary-900/30"
+          iconColor="text-primary-600 dark:text-primary-400"
         />
-        <WavyCard 
-          title="Today" 
-          value={tasks?.filter(t => t.dueDate && new Date(t.dueDate).toDateString() === new Date().toDateString()).length || 0} 
-          subtitle="Due Today" 
-          icon={Calendar} 
-          color={{ bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-500' }} 
-          waveColor="#f97316" 
+        <StatCard
+          title="Completed"
+          value={completedTasks}
+          change={8}
+          changePositive={true}
+          icon={TrendingUp}
+          iconBg="bg-green-50 dark:bg-green-900/30"
+          iconColor="text-green-600"
         />
-        <WavyCard 
-          title="In Progress" 
-          value={tasks?.filter(t => t.status !== 'DONE').length || 0} 
-          subtitle="Pending" 
-          icon={Clock} 
-          color={{ bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-500' }} 
-          waveColor="#ef4444" 
+        <StatCard
+          title="In Progress"
+          value={inProgressTasks}
+          change={-5}
+          changePositive={false}
+          icon={RefreshCw}
+          iconBg="bg-amber-50 dark:bg-amber-900/30"
+          iconColor="text-amber-500"
         />
-        <WavyCard 
-          title="Completed" 
-          value={tasks?.filter(t => t.status === 'DONE').length || 0} 
-          subtitle="All Time" 
-          icon={CheckCircle} 
-          color={{ bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-500' }} 
-          waveColor="#10b981" 
-        />
-        <WavyCard 
-          title="Completion Rate" 
-          value={`${tasks?.length ? Math.round((tasks.filter(t => t.status === 'DONE').length / tasks.length) * 100) : 0}%`} 
-          subtitle="Productivity" 
-          icon={TrendingUp} 
-          color={{ bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-500' }} 
-          waveColor="#3b82f6" 
+        <StatCard
+          title="Overdue"
+          value={overdueTasks}
+          change={-2}
+          changePositive={false}
+          icon={AlertCircle}
+          iconBg="bg-red-50 dark:bg-red-900/30"
+          iconColor="text-red-500"
         />
       </div>
 
-      {/* Quick Add Bar */}
-      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl p-4 shadow-soft border border-white/60 dark:border-gray-700/50 mb-8">
-        <form onSubmit={handleAdd}>
-          <input 
-            type="text"
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            placeholder="What needs to be done?"
-            className="w-full bg-transparent border-none outline-none text-lg font-medium text-[var(--text-primary)] placeholder:text-gray-400 px-2 py-2 mb-4"
-          />
-          <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700/50 pt-3">
-            <div className="flex items-center gap-2">
-              <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                <Flag size={14} /> Priority
-              </button>
-              <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                <Calendar size={14} /> Due Date
-              </button>
-              <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                <Folder size={14} /> Project
-              </button>
-              <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                <Tag size={14} /> Labels
-              </button>
-              <button type="button" className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                <Bell size={14} /> Reminder
-              </button>
-            </div>
-            <button type="submit" className="flex items-center px-6 py-2 bg-gradient-to-r from-primary-500 to-purple-500 hover:from-primary-600 hover:to-purple-600 text-white rounded-xl font-bold text-sm shadow-md shadow-primary-500/20 transition-all hover:scale-105 active:scale-95">
-              Add Task <Send size={14} className="ml-2" />
+      {/* ── Charts Row ── */}
+      <div className="grid grid-cols-5 gap-4">
+        {/* Task Overview Bar Chart */}
+        <div className="col-span-3 bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-[var(--border-default)]">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-bold text-gray-800 dark:text-gray-200">Task Overview</h2>
+            <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 transition-colors">
+              This Week <MoreHorizontal size={14} />
             </button>
           </div>
-        </form>
-      </div>
-
-      {/* Task List Section */}
-      <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-3xl p-6 shadow-soft border border-white/60 dark:border-gray-700/50">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-6 border-b border-gray-200 dark:border-gray-700 w-full relative">
-            <button className="text-sm font-bold text-primary-600 pb-3 border-b-2 border-primary-600 -mb-[1px]">All</button>
-            <button className="text-sm font-bold text-gray-400 pb-3 hover:text-gray-600 transition-colors">Tasks <span className="ml-1 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md text-xs">3</span></button>
-            <button className="text-sm font-bold text-gray-400 pb-3 hover:text-gray-600 transition-colors">Completed</button>
-            <button className="text-sm font-bold text-gray-400 pb-3 hover:text-gray-600 transition-colors">Archived</button>
-            
-            <div className="ml-auto pb-3 flex items-center gap-2 text-xs font-bold text-gray-400">
-              Sort: Recently Updated <ChevronDown size={14} />
+          {totalTasks > 0 ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={barData} barSize={10} barCategoryGap="30%">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 12 }}
+                />
+                <Bar dataKey="Completed" fill="#6366f1" radius={[4, 4, 0, 0]} stackId="a" />
+                <Bar dataKey="In Progress" fill="#f59e0b" radius={[0, 0, 0, 0]} stackId="a" />
+                <Bar dataKey="Overdue" fill="#ef4444" radius={[0, 0, 0, 0]} stackId="a" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[180px] flex items-center justify-center text-gray-400 text-sm">
+              No task data yet. Create some tasks to see your overview.
             </div>
+          )}
+          <div className="flex items-center gap-5 mt-3">
+            {[{ color: '#6366f1', label: 'Completed' }, { color: '#f59e0b', label: 'In Progress' }, { color: '#ef4444', label: 'Overdue' }].map(l => (
+              <div key={l.label} className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />
+                {l.label}
+              </div>
+            ))}
           </div>
         </div>
-        
-        <div className="min-h-[400px]">
+
+        {/* My Progress Donut */}
+        <div className="col-span-2 bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-[var(--border-default)]">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-gray-800 dark:text-gray-200">My Progress</h2>
+            <MoreHorizontal size={16} className="text-gray-400 cursor-pointer" />
+          </div>
+          <div className="relative flex items-center justify-center mb-4" style={{ height: 140 }}>
+            <ResponsiveContainer width="100%" height={140}>
+              <PieChart>
+                <Pie
+                  data={donutDisplay}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={45}
+                  outerRadius={60}
+                  startAngle={90}
+                  endAngle={-270}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {donutDisplay.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-2xl font-black text-gray-900 dark:text-white">{completionRate}%</span>
+              <span className="text-xs text-gray-500 font-semibold">Completed</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {[
+              { label: 'Completed', value: completedTasks, color: '#6366f1' },
+              { label: 'In Progress', value: inProgressTasks, color: '#f59e0b' },
+              { label: 'Overdue', value: overdueTasks, color: '#ef4444' },
+            ].map(item => (
+              <div key={item.label} className="flex items-center justify-between text-xs font-semibold">
+                <div className="flex items-center gap-2 text-gray-500">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                  {item.label}
+                </div>
+                <span className="text-gray-700 dark:text-gray-300">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── My Tasks Section ── */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-[var(--border-default)]">
+        <div className="flex items-center justify-between px-6 pt-5 pb-0">
+          <h2 className="text-base font-bold text-gray-800 dark:text-gray-200">My Tasks</h2>
+          <button className="flex items-center gap-1 text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors">
+            View All <ChevronRight size={14} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-1 px-6 pt-4 pb-0 border-b border-[var(--border-default)]">
+          {tabs.map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                'px-4 py-2 text-sm font-bold rounded-t-lg -mb-px transition-all',
+                activeTab === tab
+                  ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50/50 dark:bg-primary-900/20'
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              )}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Quick Add */}
+        <form onSubmit={handleAdd} className="px-6 py-3 border-b border-[var(--border-default)]">
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 rounded-md border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+              <Plus size={12} className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              value={newTaskTitle}
+              onChange={e => setNewTaskTitle(e.target.value)}
+              placeholder="Add a new task..."
+              className="flex-1 bg-transparent border-none outline-none text-sm text-gray-700 dark:text-gray-300 placeholder:text-gray-400 font-medium"
+            />
+            {newTaskTitle && (
+              <button
+                type="submit"
+                className="px-3 py-1 text-xs font-bold bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                Add
+              </button>
+            )}
+          </div>
+        </form>
+
+        {/* Task List */}
+        <div className="min-h-[200px] max-h-[400px] overflow-y-auto">
           {isLoading ? (
-            <div className="p-8 text-center text-[var(--text-secondary)]">Loading tasks...</div>
+            <div className="p-8 text-center text-gray-400 text-sm">Loading tasks...</div>
+          ) : filteredTasks.length === 0 ? (
+            <div className="p-10 text-center text-gray-400">
+              <CheckSquare size={32} className="mx-auto mb-3 text-gray-300" />
+              <p className="text-sm font-semibold">No tasks here</p>
+              <p className="text-xs mt-1">Add a task using the field above</p>
+            </div>
           ) : (
-            <TaskList 
-              tasks={tasks || []} 
+            <TaskList
+              tasks={filteredTasks}
               onToggle={handleToggle}
               onClick={(id) => setSelectedTaskId(id)}
               onReorder={handleReorder}
@@ -185,7 +302,7 @@ export const Inbox = () => {
         </div>
       </div>
 
-      <TaskDetail 
+      <TaskDetail
         task={selectedTask}
         isOpen={!!selectedTask}
         onClose={() => setSelectedTaskId(null)}
@@ -194,7 +311,3 @@ export const Inbox = () => {
     </div>
   );
 };
-
-const ChevronDown = ({ size }: { size: number }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-);

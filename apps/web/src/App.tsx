@@ -7,9 +7,9 @@ import { AppLayout } from './components/layout/AppLayout';
 import { ProjectView } from './pages/app/Project';
 import { Today } from './pages/app/Today';
 import { Upcoming } from './pages/app/Upcoming';
-import { DashboardPage } from './pages/DashboardPage';
 import { Inbox } from './pages/app/Inbox';
 import { Analytics } from './pages/app/Analytics';
+import { TeamPage, MessagesPage, SettingsPage } from './pages/app/PlaceholderPages';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const queryClient = new QueryClient();
@@ -30,7 +30,11 @@ function App() {
                 <Route path="/today" element={<Today />} />
                 <Route path="/upcoming" element={<Upcoming />} />
                 <Route path="/analytics" element={<Analytics />} />
+                <Route path="/team" element={<TeamPage />} />
+                <Route path="/messages" element={<MessagesPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/projects/:projectId" element={<ProjectView />} />
+                <Route path="/projects" element={<Navigate to="/inbox" replace />} />
               </Route>
             </Route>
             
