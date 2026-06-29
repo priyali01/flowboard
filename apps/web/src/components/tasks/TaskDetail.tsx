@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar as CalendarIcon, Flag, CheckCircle2, Circle } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Flag, CheckCircle2, Circle, MessageSquare, Activity } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import type { TaskItemProps } from './TaskItem';
+import { CommentThread } from '../comments/CommentThread';
+import { ActivityFeed } from '../activity/ActivityFeed';
 
 export interface TaskDetailProps {
   task: TaskItemProps['task'] | null;
@@ -12,12 +14,17 @@ export interface TaskDetailProps {
   onUpdate: (id: string, updates: any) => void;
 }
 
+type TabType = 'comments' | 'activity';
+
 export const TaskDetail = ({ task, isOpen, onClose, onUpdate }: TaskDetailProps) => {
   const [title, setTitle] = useState(task?.title || '');
+  const [activeTab, setActiveTab] = useState<TabType>('comments');
 
   // Sync internal state if task changes from outside
   useEffect(() => {
-    if (task) setTitle(task.title);
+    if (task) {
+      setTitle(task.title);
+    }
   }, [task]);
 
   if (!task) return null;
@@ -92,13 +99,57 @@ export const TaskDetail = ({ task, isOpen, onClose, onUpdate }: TaskDetailProps)
             <hr className="border-[var(--border-default)]" />
 
             {/* Placeholder for Description Editor */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 shrink-0">
               <span className="text-sm font-semibold text-[var(--text-primary)]">Description</span>
               <textarea 
-                className="w-full h-32 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-md p-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-disabled)] outline-none focus:ring-1 focus:ring-[var(--border-focus)] transition-all resize-none"
+                className="w-full h-24 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-md p-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-disabled)] outline-none focus:ring-1 focus:ring-[var(--border-focus)] transition-all resize-none"
                 placeholder="Add a more detailed description..."
                 defaultValue=""
               />
+            </div>
+
+            {/* Tabs for Comments and Activity */}
+            <div className="flex-1 flex flex-col min-h-[300px]">
+              <div className="flex items-center gap-6 border-b border-[var(--border-default)] mb-4">
+                <button 
+                  onClick={() => setActiveTab('comments')}
+                  className={cn(
+                    "pb-3 text-sm font-medium flex items-center gap-2 transition-colors relative",
+                    activeTab === 'comments' 
+                      ? "text-primary-600" 
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  )}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Comments
+                  {activeTab === 'comments' && (
+                    <motion.div layoutId="activeTabIndicator" className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary-600" />
+                  )}
+                </button>
+                <button 
+                  onClick={() => setActiveTab('activity')}
+                  className={cn(
+                    "pb-3 text-sm font-medium flex items-center gap-2 transition-colors relative",
+                    activeTab === 'activity' 
+                      ? "text-primary-600" 
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  )}
+                >
+                  <Activity className="h-4 w-4" />
+                  Activity
+                  {activeTab === 'activity' && (
+                    <motion.div layoutId="activeTabIndicator" className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary-600" />
+                  )}
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-hidden">
+                {activeTab === 'comments' ? (
+                  <CommentThread taskId={task.id} />
+                ) : (
+                  <ActivityFeed taskId={task.id} />
+                )}
+              </div>
             </div>
           </div>
         </motion.div>

@@ -14,6 +14,7 @@ import { cn } from '../../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { ProjectList } from '../projects/ProjectList';
+import { CommandPalette } from './CommandPalette';
 
 export const AppLayout = () => {
   useSocketSync();
@@ -83,10 +84,12 @@ export const AppLayout = () => {
         
         {/* Nav Links */}
         <div className="flex-1 overflow-y-auto px-3 py-2 space-y-6">
+          {/* Primary Navigation */}
           <div className="space-y-1">
             <NavItem to="/inbox" icon={Inbox} label="Inbox" badge={3} />
             <NavItem to="/today" icon={Sun} label="Today" badge={5} />
             <NavItem to="/upcoming" icon={Calendar} label="Upcoming" />
+            <NavItem to="/analytics" icon={BarChart} label="Analytics" />
             <NavItem to="/search" icon={Search} label="Search" />
           </div>
 
@@ -153,6 +156,7 @@ export const AppLayout = () => {
       </div>
 
       {/* Modals */}
+      <CommandPalette />
       {showLabelModal && <LabelManagerModal onClose={() => setShowLabelModal(false)} />}
       {showTemplatesModal && <TemplatesModal onClose={() => setShowTemplatesModal(false)} />}
     </div>
