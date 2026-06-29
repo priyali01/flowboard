@@ -1,43 +1,47 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary-50: #eef2ff;
-  --color-primary-100: #e0e7ff;
-  --color-primary-200: #c7d2fe;
-  --color-primary-300: #a5b4fc;
-  --color-primary-400: #818cf8;
-  --color-primary-500: #6366f1;
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-  --color-primary-800: #3730a3;
-  --color-primary-900: #312e81;
+  --color-primary-50: #f5f3ff;
+  --color-primary-100: #ede9fe;
+  --color-primary-200: #ddd6fe;
+  --color-primary-300: #c4b5fd;
+  --color-primary-400: #a78bfa;
+  --color-primary-500: #8b5cf6;
+  --color-primary-600: #7c3aed;
+  --color-primary-700: #6d28d9;
+  --color-primary-800: #5b21b6;
+  --color-primary-900: #4c1d95;
 }
 
 @layer base {
   :root {
-    --bg-app: #f9fafb;
+    --bg-app: #f4f7fc; /* A very soft blue-grey like the image */
     --bg-surface: #ffffff;
-    --bg-subtle: #f3f4f6;
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --border-default: #e5e7eb;
-    --border-focus: #6366f1;
-    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --bg-subtle: #f8fafc;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-default: #f1f5f9;
+    --border-focus: #8b5cf6;
+    --shadow: 0 10px 40px -10px rgba(139, 92, 246, 0.1);
   }
   
   .dark {
-    --bg-app: #030712;
-    --bg-surface: #111827;
-    --bg-subtle: #1f2937;
-    --text-primary: #f9fafb;
-    --text-secondary: #9ca3af;
-    --border-default: #374151;
-    --border-focus: #818cf8;
-    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+    --bg-app: #0f172a;
+    --bg-surface: #1e293b;
+    --bg-subtle: #334155;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-default: #334155;
+    --border-focus: #a78bfa;
+    --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
   }
 
   body {
     background-color: var(--bg-app);
+    background-image: radial-gradient(at 0% 0%, rgba(224, 231, 255, 0.4) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, rgba(237, 233, 254, 0.4) 0px, transparent 50%);
+    background-attachment: fixed;
     color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
   }
 }
