@@ -4,6 +4,8 @@ import { GripVertical, MoreHorizontal, Calendar as CalendarIcon } from 'lucide-r
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
 import { format, isPast, isToday } from 'date-fns';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 export interface TaskItemProps {
   task: {
@@ -20,6 +22,20 @@ export interface TaskItemProps {
 
 export const TaskItem = ({ task, onToggle, onClick }: TaskItemProps) => {
   const isCompleted = task.status === 'DONE';
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   const priorityColors = {
     LOW: 'bg-gray-400',
@@ -45,13 +61,20 @@ export const TaskItem = ({ task, onToggle, onClick }: TaskItemProps) => {
 
   return (
     <div 
+      ref={setNodeRef}
+      style={style}
       onClick={() => onClick?.(task.id)}
       className={cn(
-        "group flex items-center py-2 px-1 border-b border-[var(--border-default)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer",
-        isCompleted && "opacity-60"
+        "group flex items-center py-2 px-1 border-b border-[var(--border-default)] hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer bg-[var(--bg-surface)]",
+        isCompleted && "opacity-60",
+        isDragging && "opacity-40 shadow-md ring-1 ring-[var(--border-focus)] z-10"
       )}
     >
-      <div className="text-[var(--text-secondary)] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing px-1 mr-1">
+      <div 
+        {...attributes}
+        {...listeners}
+        className="text-[var(--text-secondary)] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing px-1 mr-1 focus:outline-none"
+      >
         <GripVertical className="h-4 w-4" />
       </div>
       

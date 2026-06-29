@@ -1,15 +1,18 @@
 import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import type { Task } from '../../api/client';
+import type { TaskItemProps } from '../../components/tasks/TaskItem';
 import { useProjects } from '../../hooks/useProjects';
 import { TaskList } from '../../components/tasks/TaskList';
-import { TaskDetailPanel } from '../../components/tasks/TaskDetailPanel';
-import { Search, Filter } from 'lucide-react';
+import { TaskDetail } from '../../components/tasks/TaskDetail';
+import { TaskQuickAdd } from '../../components/tasks/TaskQuickAdd';
+import { useTasks } from '../../hooks/useTasks';
+import { Search, Filter, Hash } from 'lucide-react';
+import { TaskListSkeleton } from '../../components/common/SkeletonLoader';
 
 export const ProjectView = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const { data: projects } = useProjects();
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,29 +25,54 @@ export const ProjectView = () => {
   }, [searchTerm]);
   
   const project = projects?.find(p => p.id === projectId);
+  
+  const { data: tasks, isLoading, createTask, updateTask, reorderTasks } = useTasks(projectId || 'global', filters);
+
+  const handleToggle = (id: string, completed: boolean) => {
+    updateTask({ id, status: completed ? 'DONE' : 'TODO' });
+  };
+
+  const handleReorder = (reorderedTasks: TaskItemProps['task'][]) => {
+    const updates = reorderedTasks.map((t, index) => ({ id: t.id, position: index }));
+    reorderTasks(updates);
+  };
+
+  const handleAdd = (title: string) => {
+    if (!projectId) return;
+    createTask({ title, projectId, status: 'TODO', priority: 'MEDIUM' });
+  };
+
+  const selectedTask = tasks?.find(t => t.id === selectedTaskId) || null;
 
   if (!projectId) return <div>No project selected</div>;
 
   return (
-    <div className="p-8 h-full bg-white relative">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">
-        {project?.name || 'Loading project...'}
-      </h1>
+    <div className="max-w-4xl mx-auto px-6 py-8 relative">
+      <div className="mb-8 flex items-center gap-3">
+        <span 
+          className="w-4 h-4 rounded-full shadow-sm" 
+          style={{ backgroundColor: project?.color ? `var(--color-${project.color}-500, ${project.color})` : 'var(--color-gray-500)' }}
+        />
+        <h1 className="text-3xl font-bold text-[var(--text-primary)]">
+          {project?.name || 'Loading project...'}
+        </h1>
+      </div>
+      
       <div className="flex items-center gap-4 mb-6">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--text-disabled)]" size={18} />
           <input
             type="text"
             placeholder="Search tasks..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg shadow-sm text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-[var(--text-primary)] placeholder-[var(--text-disabled)]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-2">
-          <Filter size={18} className="text-gray-400" />
+          <Filter size={18} className="text-[var(--text-secondary)]" />
           <select
-            className="border-gray-300 rounded-md text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 pl-3 pr-8"
+            className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-sm shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 py-2 pl-3 pr-8 text-[var(--text-primary)]"
             value={filters.status || ''}
             onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
           >
@@ -54,7 +82,7 @@ export const ProjectView = () => {
             <option value="DONE">Done</option>
           </select>
           <select
-            className="border-gray-300 rounded-md text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500 py-2 pl-3 pr-8"
+            className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-sm shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 py-2 pl-3 pr-8 text-[var(--text-primary)]"
             value={filters.priority || ''}
             onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value }))}
           >
@@ -67,15 +95,38 @@ export const ProjectView = () => {
         </div>
       </div>
       
-      <TaskList projectId={projectId} onSelectTask={setSelectedTask} filters={filters} />
+      <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border-default)] shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-[var(--border-default)] bg-[var(--bg-subtle)]/50">
+          <TaskQuickAdd onAdd={handleAdd} placeholder="Add task to project..." />
+        </div>
+        <div className="p-2">
+          {isLoading ? (
+            <TaskListSkeleton />
+          ) : tasks && tasks.length > 0 ? (
+            <TaskList 
+              tasks={tasks} 
+              onToggle={handleToggle}
+              onClick={(id) => setSelectedTaskId(id)}
+              onReorder={handleReorder}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center p-12 text-center">
+              <Hash className="h-16 w-16 text-[var(--text-disabled)] mb-4 opacity-50" />
+              <h3 className="text-lg font-medium text-[var(--text-primary)]">No tasks found</h3>
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                {Object.keys(filters).length > 0 ? "Try clearing your filters." : "Create a new task to get started."}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
 
-      {selectedTask && (
-        <TaskDetailPanel 
-          task={selectedTask} 
-          projectId={projectId} 
-          onClose={() => setSelectedTask(null)} 
-        />
-      )}
+      <TaskDetail 
+        task={selectedTask}
+        isOpen={!!selectedTask}
+        onClose={() => setSelectedTaskId(null)}
+        onUpdate={(id, updates) => updateTask({ id, ...updates })}
+      />
     </div>
   );
 };

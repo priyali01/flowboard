@@ -31,6 +31,12 @@ export class AuthController {
           email: data.email,
           passwordHash,
           name: data.name,
+          projects: {
+            create: {
+              name: 'Inbox',
+              color: 'gray',
+            }
+          }
         },
       });
 

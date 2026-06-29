@@ -1,6 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import { useProjects } from '../../hooks/useProjects';
 import { Folder, LogOut, Plus, Tag, Calendar, Clock, BarChart, Sun, Moon, Inbox, Settings, Bell, Search, LayoutTemplate, MoreHorizontal } from 'lucide-react';
 import { LabelManagerModal } from '../labels/LabelManagerModal';
 import { TemplatesModal } from '../tasks/TemplatesModal';
@@ -14,32 +13,22 @@ import { useDarkMode } from '../../hooks/useDarkMode';
 import { cn } from '../../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { ProjectList } from '../projects/ProjectList';
+
 export const AppLayout = () => {
   useSocketSync();
   const { isOnline, isSyncing } = useNetworkSync();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const { user, logout } = useAuthStore();
-  const { activeWorkspaceId } = useWorkspaceStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: projects, isLoading, createProject } = useProjects(activeWorkspaceId || undefined);
+  
   const [showLabelModal, setShowLabelModal] = useState(false);
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
-
-  const handleCreateProject = () => {
-    if (!activeWorkspaceId) {
-      alert("Please select a workspace first.");
-      return;
-    }
-    const name = prompt('Enter project name:');
-    if (name) {
-      createProject({ name, workspaceId: activeWorkspaceId });
-    }
   };
 
   const NavItem = ({ to, icon: Icon, label, badge }: { to: string, icon: any, label: string, badge?: number }) => {
@@ -102,27 +91,8 @@ export const AppLayout = () => {
           </div>
 
           {/* Projects */}
-          <div>
-            <div className="flex items-center justify-between px-3 mb-2">
-              <h2 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Projects</h2>
-              <button onClick={handleCreateProject} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="space-y-1">
-              {projects?.map(project => (
-                <Link 
-                  key={project.id} 
-                  to={`/project/${project.id}`} 
-                  className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-lg text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)] transition-colors group"
-                  )}
-                >
-                  <span className="w-2 h-2 rounded-full bg-primary-500 mr-3" />
-                  <span className="flex-1 truncate">{project.name}</span>
-                </Link>
-              ))}
-            </div>
+          <div className="pt-2">
+            <ProjectList />
           </div>
 
           {/* Labels & Templates */}

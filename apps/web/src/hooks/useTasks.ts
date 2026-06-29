@@ -13,7 +13,8 @@ export const useTasks = (projectId: string, filters: Record<string, string> = {}
       Object.entries(filters).forEach(([key, value]) => {
         if (value) params.append(key, value);
       });
-      const { data } = await apiClient.get(`/projects/${projectId}/tasks?${params.toString()}`);
+      const endpoint = projectId === 'global' ? `/tasks?${params.toString()}` : `/projects/${projectId}/tasks?${params.toString()}`;
+      const { data } = await apiClient.get(endpoint);
       return data;
     },
     enabled: !!projectId,
