@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { TaskItem, type TaskItemProps } from './TaskItem';
 import {
   DndContext,
