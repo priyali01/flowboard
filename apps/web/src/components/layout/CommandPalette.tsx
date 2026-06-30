@@ -24,12 +24,16 @@ export const CommandPalette = () => {
   const { data: projects } = useProjects(activeWorkspaceId || undefined);
   const { logout } = useAuthStore();
 
-  // Toggle on Ctrl+K / ⌘K
+  // Toggle on Ctrl+K / ⌘K and close on Escape
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpen(!open);
+      }
+      if (e.key === 'Escape' && open) {
+        e.preventDefault();
+        setOpen(false);
       }
     };
     document.addEventListener('keydown', down);
