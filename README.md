@@ -73,15 +73,17 @@ Built with a modern TypeScript monorepo, it ships as a **responsive web app**, a
 |--|-----------|
 | Framework | React 18 + TypeScript |
 | Build | Vite |
-| Routing | React Router v6 |
+| Routing | React Router v7 |
 | Server state | TanStack Query (React Query) |
-| UI state | Zustand |
+| UI state | Zustand (with persist) |
 | Styling | Tailwind CSS + shadcn/ui |
 | Forms | React Hook Form + Zod |
 | Drag & Drop | @dnd-kit |
 | Rich text | TipTap (WYSIWYG / Markdown) |
 | Real-time | Socket.io-client |
 | Animations | Framer Motion |
+| Notifications | react-hot-toast |
+| Command Palette| cmdk |
 | PWA | Vite PWA Plugin (Workbox) |
 | Testing | Vitest · React Testing Library · Playwright |
 
