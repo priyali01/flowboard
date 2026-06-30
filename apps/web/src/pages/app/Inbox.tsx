@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TaskList } from '../../components/tasks/TaskList';
 import { TaskDetail } from '../../components/tasks/TaskDetail';
 import type { TaskItemProps } from '../../components/tasks/TaskItem';
@@ -36,11 +37,12 @@ const StatCard = ({ title, value, change, changePositive, icon: Icon, iconBg, ic
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export const Inbox = () => {
+ const navigate = useNavigate();
  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
  const [activeTab, setActiveTab] = useState<'All' | 'To Do' | 'In Progress' | 'Done'>('All');
  const [newTaskTitle, setNewTaskTitle] = useState('');
 
- const { data: tasks, isLoading, createTask, updateTask, reorderTasks } = useTasks('global');
+ const { data: tasks, isLoading, createTask, updateTask, deleteTask, reorderTasks } = useTasks('global');
  const { data: projects } = useProjects();
  const defaultProjectId = projects?.[0]?.id;
 
@@ -77,7 +79,11 @@ export const Inbox = () => {
 
  const handleAdd = (e: React.FormEvent) => {
  e.preventDefault();
- if (!newTaskTitle.trim() || !defaultProjectId) return;
+ if (!newTaskTitle.trim()) return;
+ if (!defaultProjectId) {
+  alert('Please create a project first before adding tasks.');
+  return;
+ }
  createTask({ title: newTaskTitle, projectId: defaultProjectId, status: 'TODO', priority: 'MEDIUM' });
  setNewTaskTitle('');
  };
@@ -234,7 +240,7 @@ export const Inbox = () => {
  <div className="bg-white rounded-2xl shadow-sm border border-[var(--border-default)]">
  <div className="flex items-center justify-between px-6 pt-5 pb-0">
  <h2 className="text-base font-bold text-gray-800 ">My Tasks</h2>
- <button className="flex items-center gap-1 text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors">
+ <button onClick={() => navigate('/today')} className="flex items-center gap-1 text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors">
  View All <ChevronRight size={14} />
  </button>
  </div>
@@ -273,7 +279,7 @@ export const Inbox = () => {
  {newTaskTitle && (
  <button
  type="submit"
- className="px-3 py-1 text-xs font-bold bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+ className="px-3 py-1 text-xs font-bold bg-gradient-to-r from-[#5961F9] via-[#A855F7] to-[#F97316] hover:opacity-90 transition-colors"
  >
  Add
  </button>
@@ -307,7 +313,8 @@ export const Inbox = () => {
  isOpen={!!selectedTask}
  onClose={() => setSelectedTaskId(null)}
  onUpdate={(id, updates) => updateTask({ id, ...updates })}
- />
+      onDelete={(id) => { const task = tasks?.find(t => t.id === id); if (task) deleteTask({ id, projectId: task.projectId }); }}
+      />
  </div>
  );
 };

@@ -66,7 +66,8 @@ export const Upcoming = () => {
  isOpen={!!selectedTask}
  onClose={() => setSelectedTaskId(null)}
  onUpdate={(id, updates) => updateTask({ id, ...updates })}
- />
+      onDelete={(id) => { const task = tasks?.find(t => t.id === id); if (task) deleteTask({ id, projectId: task.projectId }); }}
+      />
  </div>
  );
 };

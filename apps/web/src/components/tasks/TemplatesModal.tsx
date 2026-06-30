@@ -149,7 +149,7 @@ export const TemplatesModal: React.FC<Props> = ({ onClose }) => {
  <button 
  type="submit"
  disabled={!newTitle.trim()}
- className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+ className="bg-gradient-to-r from-[#5961F9] via-[#A855F7] to-[#F97316] hover:opacity-90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
  >
  Create
  </button>

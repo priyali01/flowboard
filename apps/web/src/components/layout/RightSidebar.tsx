@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Clock, ChevronRight as ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
 import { format, isToday, isTomorrow, isFuture } from 'date-fns';
 
@@ -48,7 +48,7 @@ export const RightSidebar = () => {
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-gray-800 ">Upcoming</h3>
                     <button className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5">
-                        View All <ArrowRight size={12} />
+                        View All <ChevronRight size={12} />
                     </button>
                 </div>
 
@@ -85,7 +85,7 @@ export const RightSidebar = () => {
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-gray-800 ">Team Activity</h3>
                     <button className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5">
-                        View All <ArrowRight size={12} />
+                        View All <ChevronRight size={12} />
                     </button>
                 </div>
 
@@ -121,7 +121,7 @@ export const RightSidebar = () => {
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-gray-800 ">Calendar</h3>
                     <button className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5">
-                        View Calendar <ArrowRight size={12} />
+                        View Calendar <ChevronRight size={12} />
                     </button>
                 </div>
 
@@ -159,7 +159,7 @@ export const RightSidebar = () => {
                                     className={`
  relative flex flex-col items-center justify-center h-7 text-[11px] font-semibold rounded-lg cursor-pointer transition-colors
  ${day === null ? '' : 'hover:bg-white :bg-gray-700'}
- ${isToday_ ? 'bg-primary-600 text-white hover:bg-primary-700 :bg-primary-500 font-bold' : 'text-gray-600 '}
+ ${isToday_ ? 'bg-gradient-to-r from-[#5961F9] via-[#A855F7] to-[#F97316] hover:opacity-90 :bg-primary-500 font-bold' : 'text-gray-600 '}
  `}
                                 >
                                     {day}

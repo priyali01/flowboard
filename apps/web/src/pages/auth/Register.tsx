@@ -165,7 +165,7 @@ export const Register = () => {
                   whileTap={{ scale: 0.99 }}
                   type="submit"
                   disabled={registerMutation.isPending}
-                  className="group relative flex w-full justify-center items-center gap-2 rounded-xl border border-transparent bg-primary-600 py-3 px-4 text-sm font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-70 transition-all"
+                  className="group relative flex w-full justify-center items-center gap-2 rounded-xl border border-transparent bg-gradient-to-r from-[#5961F9] via-[#A855F7] to-[#F97316] text-white hover:opacity-90 py-3 px-4 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-70 transition-all"
                 >
                   {registerMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

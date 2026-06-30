@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar as CalendarIcon, Flag, CheckCircle2, Circle, MessageSquare, Activity } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Flag, CheckCircle2, Circle, MessageSquare, Activity, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import type { TaskItemProps } from './TaskItem';
@@ -12,11 +12,12 @@ export interface TaskDetailProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (id: string, updates: any) => void;
+  onDelete?: (id: string) => void;
 }
 
 type TabType = 'comments' | 'activity';
 
-export const TaskDetail = ({ task, isOpen, onClose, onUpdate }: TaskDetailProps) => {
+export const TaskDetail = ({ task, isOpen, onClose, onUpdate, onDelete }: TaskDetailProps) => {
   const [title, setTitle] = useState(task?.title || '');
   const [activeTab, setActiveTab] = useState<TabType>('comments');
 
@@ -52,9 +53,21 @@ export const TaskDetail = ({ task, isOpen, onClose, onUpdate }: TaskDetailProps)
             <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => onUpdate(task.id, { status: isCompleted ? 'TODO' : 'DONE' })}>
               {isCompleted ? <CheckCircle2 className="h-5 w-5 text-indigo-500" /> : <Circle className="h-5 w-5 text-[var(--text-secondary)]" />}
             </Button>
-            <Button variant="ghost" className="h-8 w-8 p-0" onClick={onClose}>
-              <X className="h-5 w-5 text-[var(--text-secondary)]" />
-            </Button>
+            <div className="flex items-center gap-1">
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  className="h-8 w-8 p-0 hover:bg-red-50"
+                  onClick={() => { onDelete(task.id); onClose(); }}
+                  title="Delete task"
+                >
+                  <Trash2 className="h-4 w-4 text-red-400" />
+                </Button>
+              )}
+              <Button variant="ghost" className="h-8 w-8 p-0" onClick={onClose}>
+                <X className="h-5 w-5 text-[var(--text-secondary)]" />
+              </Button>
+            </div>
           </div>
 
           {/* Content */}

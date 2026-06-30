@@ -220,7 +220,7 @@ export const Login = () => {
                 whileTap={{ scale: 0.99 }}
                 type="submit"
                 disabled={loginMutation.isPending}
-                className="group relative flex w-full justify-center items-center gap-2 rounded-xl border border-transparent bg-gradient-to-r from-blue-500 to-orange-500 py-3.5 px-4 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-70 transition-all"
+                className="group relative flex w-full justify-center items-center gap-2 rounded-xl border border-transparent bg-gradient-to-r from-[#5961F9] via-[#A855F7] to-[#F97316] py-3.5 px-4 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-70 transition-all"
               >
                 {loginMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -46,7 +46,7 @@ export const TaskItem = ({ task, onToggle, onClick }: TaskItemProps) => {
  URGENT: { color: 'text-red-600', bg: 'bg-red-100 ', label: 'Urgent' },
  };
 
- const pConfig = priorityConfig[task.priority];
+ const pConfig = priorityConfig[task.priority] ?? priorityConfig.MEDIUM;
 
  const renderDueDate = () => {
  if (!task.dueDate) return null;
