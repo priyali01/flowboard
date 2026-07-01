@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../db';
 import { z } from 'zod';
+import { socketService } from '../services/socket.service';
 
 const createProjectSchema = z.object({
   name: z.string().min(1).max(100),
@@ -55,6 +56,19 @@ export class ProjectController {
         },
       });
 
+      await prisma.notification.create({
+        data: {
+          userId,
+          type: 'PROJECT_CREATED',
+          title: 'Project Created',
+          message: `Project "${project.name}" was created.`,
+          icon: 'FolderPlus',
+          entityId: project.id,
+          entityType: 'PROJECT'
+        }
+      });
+      socketService.emitToUser(userId, 'new_notification', {});
+
       res.status(201).json(project);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -93,6 +107,21 @@ export class ProjectController {
         },
       });
 
+      if (data.name && data.name !== project.name) {
+        await prisma.notification.create({
+          data: {
+            userId,
+            type: 'PROJECT_RENAMED',
+            title: 'Project Renamed',
+            message: `Project "${project.name}" was renamed to "${data.name}".`,
+            icon: 'Edit2',
+            entityId: project.id,
+            entityType: 'PROJECT'
+          }
+        });
+        socketService.emitToUser(userId, 'new_notification', {});
+      }
+
       res.json(updatedProject);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -122,6 +151,20 @@ export class ProjectController {
       }
 
       await prisma.project.delete({ where: { id } });
+
+      await prisma.notification.create({
+        data: {
+          userId,
+          type: 'PROJECT_DELETED',
+          title: 'Project Deleted',
+          message: `Project "${project.name}" was deleted.`,
+          icon: 'Trash2',
+          entityId: null,
+          entityType: 'PROJECT'
+        }
+      });
+      socketService.emitToUser(userId, 'new_notification', {});
+
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: 'Failed to delete project' });

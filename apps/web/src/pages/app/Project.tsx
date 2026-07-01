@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { TaskItemProps } from '../../components/tasks/TaskItem';
 import { useProjects } from '../../hooks/useProjects';
 import { TaskList } from '../../components/tasks/TaskList';

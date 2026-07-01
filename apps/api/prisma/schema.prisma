@@ -142,12 +142,17 @@ model Activity {
 }
 
 model Notification {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  message   String
-  isRead    Boolean  @default(false) @map("is_read")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  type        String   @default("SYSTEM") @db.VarChar(50)
+  title       String   @default("Notification") @db.VarChar(255)
+  message     String
+  icon        String?  @db.VarChar(50)
+  entityId    String?  @map("entity_id") @db.Uuid
+  entityType  String?  @map("entity_type") @db.VarChar(50)
+  isRead      Boolean  @default(false) @map("is_read")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }

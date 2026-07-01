@@ -104,12 +104,18 @@ export class TaskController {
 
       socketService.emitToUser(userId, 'task_created', task);
       
-      if (assigneeId && assigneeId !== userId) {
-        await prisma.notification.create({
-          data: { userId: assigneeId, message: `You have been assigned to task: ${task.title}` }
-        });
-        socketService.emitToUser(assigneeId, 'new_notification', {});
-      }
+      await prisma.notification.create({
+        data: { 
+          userId, 
+          type: 'TASK_CREATED',
+          title: 'Task Created',
+          message: `"${task.title}" was added.`,
+          icon: 'CheckSquare',
+          entityId: task.id,
+          entityType: 'TASK'
+        }
+      });
+      socketService.emitToUser(userId, 'new_notification', {});
 
       res.status(201).json(task);
     } catch (error: any) {
@@ -154,9 +160,22 @@ export class TaskController {
         include: { labels: true, assignee: { select: { id: true, name: true, avatarUrl: true } } }
       });
 
+      // Rich personal notifications
       if (data.status && data.status !== task.status) {
+        let title = 'Task Updated';
+        let message = `"${task.title}" status changed to ${data.status.toLowerCase().replace('_', ' ')}.`;
+        let icon = 'Activity';
+        let type = 'TASK_UPDATED';
+
+        if (data.status === 'DONE') {
+           title = 'Task Completed';
+           message = `You completed "${task.title}". Great job!`;
+           icon = 'CheckCircle2';
+           type = 'TASK_COMPLETED';
+        }
+
         await prisma.notification.create({
-          data: { userId, message: `Task "${task.title}" status changed to ${data.status}` }
+          data: { userId, type, title, message, icon, entityId: task.id, entityType: 'TASK' }
         });
         socketService.emitToUser(userId, 'new_notification', {});
 
@@ -193,11 +212,18 @@ export class TaskController {
         }
       }
 
-      if (assigneeId && assigneeId !== task.assigneeId && assigneeId !== userId) {
+      if (data.priority && data.priority !== task.priority) {
         await prisma.notification.create({
-          data: { userId: assigneeId, message: `You have been assigned to task: ${task.title}` }
+          data: { userId, type: 'TASK_PRIORITY_CHANGED', title: 'Priority Changed', message: `"${task.title}" is now ${data.priority} priority.`, icon: 'Flag', entityId: task.id, entityType: 'TASK' }
         });
-        socketService.emitToUser(assigneeId, 'new_notification', {});
+        socketService.emitToUser(userId, 'new_notification', {});
+      }
+
+      if (data.dueDate !== undefined && data.dueDate !== task.dueDate?.toISOString() && data.dueDate !== null) {
+        await prisma.notification.create({
+          data: { userId, type: 'TASK_DUE_DATE_CHANGED', title: 'Due Date Updated', message: `"${task.title}" is now due on ${new Date(data.dueDate).toLocaleDateString()}.`, icon: 'Calendar', entityId: task.id, entityType: 'TASK' }
+        });
+        socketService.emitToUser(userId, 'new_notification', {});
       }
 
       socketService.emitToUser(userId, 'task_updated', updatedTask);
@@ -226,6 +252,19 @@ export class TaskController {
       if (!hasAccess) return res.status(403).json({ error: 'Not authorized' });
 
       await prisma.task.delete({ where: { id } });
+
+      await prisma.notification.create({
+        data: { 
+          userId, 
+          type: 'TASK_DELETED',
+          title: 'Task Deleted',
+          message: `"${task.title}" was deleted.`,
+          icon: 'Trash2',
+          entityId: null, // Since the task is deleted, no valid entity ID
+          entityType: 'TASK'
+        }
+      });
+      socketService.emitToUser(userId, 'new_notification', {});
 
       socketService.emitToUser(userId, 'task_deleted', { id });
 
