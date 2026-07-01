@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { TaskList } from '../../components/tasks/TaskList';
 import { TaskDetail } from '../../components/tasks/TaskDetail';
 import type { TaskItemProps } from '../../components/tasks/TaskItem';
@@ -17,7 +18,11 @@ import {
 
 // ── Stat Card ──────────────────────────────────────────────────────────────
 const StatCard = ({ title, value, change, changePositive, icon: Icon, iconBg, iconColor }: any) => (
- <div className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--border-default)] hover:shadow-md transition-shadow">
+ <motion.div 
+   variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+   transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+   className="bg-white rounded-2xl p-5 shadow-sm border border-[var(--border-default)] hover:shadow-md transition-shadow"
+ >
  <div className="flex items-center justify-between mb-3">
  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{title}</p>
  <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center', iconBg)}>
@@ -30,7 +35,7 @@ const StatCard = ({ title, value, change, changePositive, icon: Icon, iconBg, ic
  {changePositive ? '+' : ''}{change}% from last week
  </p>
  )}
- </div>
+ </motion.div>
 );
 
 // ── Days for bar chart ─────────────────────────────────────────────────────
@@ -143,7 +148,18 @@ export const Inbox = () => {
  return (
  <div className="space-y-6">
  {/* ── Stat Cards ── */}
- <div className="grid grid-cols-4 gap-4">
+ <motion.div 
+   className="grid grid-cols-4 gap-4"
+   initial="hidden"
+   animate="show"
+   variants={{
+     hidden: { opacity: 0 },
+     show: {
+       opacity: 1,
+       transition: { staggerChildren: 0.1 }
+     }
+   }}
+ >
  <StatCard
  title="Total Tasks"
  value={totalTasks}
@@ -180,7 +196,7 @@ export const Inbox = () => {
  iconBg="bg-red-50 "
  iconColor="text-red-500"
  />
- </div>
+ </motion.div>
 
  {/* ── Charts Row ── */}
  <div className="grid grid-cols-5 gap-4">

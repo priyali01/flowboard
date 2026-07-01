@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { TaskItem, type TaskItemProps } from './TaskItem';
 import {
   DndContext,
@@ -66,14 +67,23 @@ export const TaskList = ({ tasks, onToggle, onClick, onReorder }: TaskListProps)
     >
       <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
         <div className="flex flex-col">
-          {tasks.map(task => (
-            <TaskItem 
-              key={task.id} 
-              task={task} 
-              onToggle={onToggle} 
-              onClick={onClick} 
-            />
-          ))}
+          <AnimatePresence initial={false}>
+            {tasks.map(task => (
+              <motion.div
+                key={task.id}
+                initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                exit={{ opacity: 0, height: 0, scale: 0.95, overflow: 'hidden' }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+              >
+                <TaskItem 
+                  task={task} 
+                  onToggle={onToggle} 
+                  onClick={onClick} 
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </SortableContext>
     </DndContext>

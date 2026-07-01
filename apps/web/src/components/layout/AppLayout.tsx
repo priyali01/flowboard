@@ -1,4 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../../stores/authStore';
 import {
   LayoutDashboard, CheckSquare, FolderOpen, CalendarDays, Users,
@@ -311,8 +312,19 @@ export const AppLayout = () => {
         {/* Main + Right Sidebar */}
         <main className="flex-1 overflow-hidden flex">
           <div className="flex-1 overflow-y-auto px-3 sm:px-5 md:px-8 py-4 md:py-6">
-            <div className="max-w-5xl mx-auto">
-              <Outlet />
+            <div className="max-w-5xl mx-auto h-full">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={location.pathname}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="h-full"
+                >
+                  <Outlet />
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
           {!location.pathname.startsWith('/settings') && (

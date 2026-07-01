@@ -1,16 +1,21 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import type { TaskItemProps } from '../../components/tasks/TaskItem';
 import { TaskList } from '../../components/tasks/TaskList';
 import { TaskDetail } from '../../components/tasks/TaskDetail';
 import { TaskListSkeleton } from '../../components/common/SkeletonLoader';
-import { CheckCircle2, CheckSquare, Calendar, AlertCircle, ChevronDown, ChevronRight, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
+import { CheckCircle2, CheckSquare, Calendar, AlertCircle, ChevronDown, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
 import { cn } from '../../lib/utils';
-import { isToday, isPast, startOfDay, isTomorrow } from 'date-fns';
+import { isToday, isPast } from 'date-fns';
 
 // ── Stat Card Component ──────────────────────────────────────────────────
 const StatCard = ({ title, value, change, changePositive, icon: Icon, iconBg, iconColor }: any) => (
-  <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-gray-200/60 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group cursor-pointer">
+  <motion.div 
+    variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
+    transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+    className="bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-sm border border-gray-200/60 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+  >
     <div className="flex items-center justify-between mb-3">
       <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110', iconBg)}>
         <Icon size={20} className={iconColor} strokeWidth={2.5} />
@@ -25,7 +30,7 @@ const StatCard = ({ title, value, change, changePositive, icon: Icon, iconBg, ic
         </p>
       )}
     </div>
-  </div>
+  </motion.div>
 );
 
 // ── Group Header Component ───────────────────────────────────────────────
@@ -118,7 +123,15 @@ export const Today = () => {
       </div>
 
       {/* ── Summary Cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <motion.div 
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+        }}
+      >
         <StatCard
           title="Total Tasks"
           value={totalTasksCount}
@@ -155,9 +168,9 @@ export const Today = () => {
           iconBg="bg-emerald-100"
           iconColor="text-emerald-600"
         />
-      </div>
+      </motion.div>
 
-      {/* ── Modern Filter Bar ── */}
+      {/* ── Filter / Sort Actions ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-white/60 backdrop-blur-xl p-2 rounded-2xl border border-gray-200/50 shadow-sm">
         <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
           {filters.map(filter => (

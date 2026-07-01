@@ -1,6 +1,6 @@
 import { cn } from '../../lib/utils';
 import { GripVertical, MoreVertical, Calendar as CalendarIcon, MessageSquare, Flag, Paperclip } from 'lucide-react';
-import { format, isToday, isTomorrow, isPast, startOfDay } from 'date-fns';
+import { format, isToday, isTomorrow, isPast } from 'date-fns';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -49,7 +49,6 @@ export const TaskItem = ({ task, onToggle, onClick }: TaskItemProps) => {
   const renderDueDate = () => {
     if (!task.dueDate) return null;
     const date = new Date(task.dueDate);
-    const today = startOfDay(new Date());
     const isOverdue = isPast(date) && !isToday(date) && !isCompleted;
     
     let text = format(date, 'MMM d');

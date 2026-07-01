@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import { User, Lock, Bell, Palette, ChevronRight, Check, Loader2, Monitor } from 'lucide-react';
+import { User, Lock, Bell, Palette, Check, Loader2, Monitor } from 'lucide-react';
 
 const settingsSections = [
   { id: 'profile', label: 'Profile', icon: User },
