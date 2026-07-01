@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
+import { useAuthStore } from '../stores/authStore';
 
 export interface AnalyticsData {
   totalTasks: number;
@@ -10,14 +11,15 @@ export interface AnalyticsData {
   projectCompletion: { id: string; name: string; percentage: number }[];
 }
 
-export const useAnalytics = (workspaceId?: string) => {
+// Fetch analytics scoped to the current user (no workspace required)
+export const useAnalytics = () => {
+  const { accessToken } = useAuthStore();
   return useQuery({
-    queryKey: ['analytics', workspaceId],
+    queryKey: ['analytics'],
     queryFn: async () => {
-      if (!workspaceId) return null;
-      const { data } = await apiClient.get<AnalyticsData>(`/workspaces/${workspaceId}/analytics`);
+      const { data } = await apiClient.get<AnalyticsData>('/analytics');
       return data;
     },
-    enabled: !!workspaceId,
+    enabled: !!accessToken,
   });
 };

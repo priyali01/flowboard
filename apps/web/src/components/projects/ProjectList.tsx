@@ -3,23 +3,20 @@ import { Link, useLocation } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import type { Project } from '../../api/client';
 import { useProjects } from '../../hooks/useProjects';
-import { useWorkspaceStore } from '../../hooks/useWorkspaces';
+import type { Project } from '../../api/client';
 import { ProjectFormModal } from './ProjectFormModal';
 
 export const ProjectList = () => {
- const { activeWorkspaceId } = useWorkspaceStore();
- const { data: projects, createProject, updateProject, deleteProject } = useProjects(activeWorkspaceId || undefined);
- const location = useLocation();
+  const { data: projects, createProject, updateProject, deleteProject } = useProjects();
+  const location = useLocation();
 
  const [isFormOpen, setIsFormOpen] = useState(false);
  const [editingProject, setEditingProject] = useState<Project | null>(null);
 
- const handleCreate = (data: { name: string; color: string }) => {
- if (!activeWorkspaceId) return;
- createProject({ ...data, workspaceId: activeWorkspaceId });
- };
+  const handleCreate = (data: { name: string; color: string }) => {
+    createProject({ ...data });
+  };
 
  const handleUpdate = (data: { name: string; color: string }) => {
  if (!editingProject) return;

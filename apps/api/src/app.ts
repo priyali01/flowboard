@@ -39,7 +39,7 @@ app.use('/v1', commentRoutes);
 app.use('/v1', activityRoutes);
 app.use('/v1', notificationRoutes);
 app.use('/v1/workspaces', authMiddleware, workspaceRoutes);
-app.use('/v1/workspaces', authMiddleware, analyticsRoutes);
+app.use('/v1', authMiddleware, analyticsRoutes);
 app.use('/v1/workspaces', authMiddleware, exportRoutes);
 app.use('/v1', authMiddleware, templateRoutes);
 

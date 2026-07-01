@@ -1,16 +1,10 @@
-import { useWorkspaceStore } from '../hooks/useWorkspaces';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Download, CheckCircle, Clock, CheckSquare, Zap } from 'lucide-react';
 import { apiClient } from '../api/client';
 
 export const DashboardPage = () => {
- const { activeWorkspaceId } = useWorkspaceStore();
- const { data, isLoading } = useAnalytics(activeWorkspaceId || undefined);
-
- if (!activeWorkspaceId) {
- return <div className="p-8 text-center text-gray-500">Please select a workspace.</div>;
- }
+  const { data, isLoading } = useAnalytics();
 
  if (isLoading || !data) {
  return <div className="p-8 text-center text-gray-500">Loading analytics...</div>;
@@ -18,7 +12,7 @@ export const DashboardPage = () => {
 
  const handleExport = async (format: 'csv' | 'pdf') => {
  try {
- const response = await apiClient.get(`/workspaces/${activeWorkspaceId}/export?format=${format}`, {
+ const response = await apiClient.get(`/analytics/export?format=${format}`, {
  responseType: 'blob',
  });
  const url = window.URL.createObjectURL(new Blob([response.data]));

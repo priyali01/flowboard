@@ -2,27 +2,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import type { TaskTemplate } from '../api/client';
 
-export const useTemplates = (workspaceId?: string) => {
+export const useTemplates = () => {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['templates', workspaceId],
+    queryKey: ['templates'],
     queryFn: async () => {
-      if (!workspaceId) return [];
-      const { data } = await apiClient.get<TaskTemplate[]>(`/workspaces/${workspaceId}/templates`);
+      const { data } = await apiClient.get<TaskTemplate[]>('/templates');
       return data;
     },
-    enabled: !!workspaceId,
   });
 
   const createTemplate = useMutation({
     mutationFn: async (template: Omit<TaskTemplate, 'id' | 'createdAt' | 'updatedAt' | 'workspaceId'>) => {
-      if (!workspaceId) throw new Error('No workspace selected');
-      const { data } = await apiClient.post<TaskTemplate>(`/workspaces/${workspaceId}/templates`, template);
+      const { data } = await apiClient.post<TaskTemplate>('/templates', template);
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['templates', workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
     },
   });
 
@@ -31,7 +28,7 @@ export const useTemplates = (workspaceId?: string) => {
       await apiClient.delete(`/templates/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['templates', workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
     },
   });
 

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
 import { useNavigate } from 'react-router-dom';
 import { useProjects } from '../../hooks/useProjects';
-import { useWorkspaceStore } from '../../hooks/useWorkspaces';
 import { Search, Inbox, Sun, Calendar, Folder, FolderPlus, FilePlus, LogOut } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { create } from 'zustand';
@@ -20,8 +19,7 @@ export const useCommandPaletteStore = create<PaletteStore>((set) => ({
 export const CommandPalette = () => {
   const { open, setOpen } = useCommandPaletteStore();
   const navigate = useNavigate();
-  const { activeWorkspaceId } = useWorkspaceStore();
-  const { data: projects } = useProjects(activeWorkspaceId || undefined);
+  const { data: projects } = useProjects();
   const { logout } = useAuthStore();
 
   // Toggle on Ctrl+K / ⌘K and close on Escape

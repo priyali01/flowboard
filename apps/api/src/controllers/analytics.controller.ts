@@ -5,16 +5,10 @@ export class AnalyticsController {
   async getDashboardMetrics(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId;
-      const workspaceId = String(req.params.workspaceId);
 
-      const member = await prisma.workspaceMember.findUnique({
-        where: { workspaceId_userId: { workspaceId, userId } }
-      });
-      if (!member) return res.status(403).json({ error: 'Not authorized' });
-
-      // Get all projects in workspace
+      // Get all projects owned by this user
       const projects = await prisma.project.findMany({
-        where: { workspaceId }
+        where: { ownerId: userId }
       });
       const projectIds = projects.map(p => p.id);
 
@@ -39,7 +33,6 @@ export class AnalyticsController {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      // Using activities to find completion events
       const completionActivities = await prisma.activity.findMany({
         where: {
           task: { projectId: { in: projectIds } },
@@ -51,7 +44,6 @@ export class AnalyticsController {
       });
 
       const completedByDay: Record<string, number> = {};
-      // Initialize last 30 days with 0
       for (let i = 29; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
@@ -81,8 +73,7 @@ export class AnalyticsController {
         };
       }));
 
-      // Streak calculation (user specific within workspace, or global for user?)
-      // Let's do user specific streak across all their tasks (simpler and more meaningful for the user)
+      // Streak calculation
       const userCompletionActivities = await prisma.activity.findMany({
         where: {
           userId,
@@ -95,13 +86,10 @@ export class AnalyticsController {
 
       let currentStreak = 0;
       let checkDate = new Date();
-      // Reset time to start of day for comparison
       checkDate.setHours(0, 0, 0, 0);
 
-      // Create a Set of unique completion dates for the user
       const uniqueCompletionDates = new Set(userCompletionActivities.map(act => {
         const d = new Date(act.createdAt);
-        // adjust to local timezone date string ideally, but UTC is fine for MVP
         return d.toISOString().split('T')[0];
       }));
 
@@ -111,7 +99,6 @@ export class AnalyticsController {
       const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
 
       if (uniqueCompletionDates.has(todayStr) || uniqueCompletionDates.has(yesterdayStr)) {
-        // They have a streak going
         let cur = uniqueCompletionDates.has(todayStr) ? checkDate : yesterdayDate;
         while (true) {
           const curStr = cur.toISOString().split('T')[0];

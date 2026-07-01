@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { X, Play, Trash2, Plus, LayoutTemplate } from 'lucide-react';
 import { useTemplates } from '../../hooks/useTemplates';
-import { useWorkspaceStore } from '../../hooks/useWorkspaces';
 import { useProjects } from '../../hooks/useProjects';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,9 +10,8 @@ interface Props {
 }
 
 export const TemplatesModal: React.FC<Props> = ({ onClose }) => {
- const { activeWorkspaceId } = useWorkspaceStore();
- const { data: templates = [], deleteTemplate, instantiateTemplate, createTemplate } = useTemplates(activeWorkspaceId || undefined);
- const { data: projects = [] } = useProjects(activeWorkspaceId || undefined);
+ const { data: templates = [], deleteTemplate, instantiateTemplate, createTemplate } = useTemplates();
+ const { data: projects = [] } = useProjects();
  
  const [showCreate, setShowCreate] = useState(false);
  const [newTitle, setNewTitle] = useState('');
