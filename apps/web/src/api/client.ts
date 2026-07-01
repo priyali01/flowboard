@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
+import toast from 'react-hot-toast';
 
 export const apiClient = axios.create({
   baseURL: 'http://localhost:3000/v1',
@@ -12,6 +13,17 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      toast.error('Your session has expired. Please sign in again.');
+      useAuthStore.getState().logout();
+    }
+    return Promise.reject(error);
+  }
+);
 
 export interface Project {
   id: string;
