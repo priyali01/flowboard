@@ -55,12 +55,46 @@ export const Inbox = () => {
  }).length || 0;
  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
- // ── Bar chart data (mock weekly distribution) ──────────────────────────
+ // ── Bar chart data: real per-day counts for the current week ──────────
+ // Build a map: dayIndex (0=Mon … 6=Sun) → { Completed, InProgress, Overdue }
+ const weeklyMap: Record<number, { Completed: number; 'In Progress': number; Overdue: number }> = {};
+ DAYS.forEach((_, i) => { weeklyMap[i] = { Completed: 0, 'In Progress': 0, Overdue: 0 }; });
+
+ const now = new Date();
+ // Get start of the current week (Monday)
+ const dayOfWeek = now.getDay(); // 0=Sun,1=Mon,...,6=Sat
+ const diffToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+ const weekStart = new Date(now);
+ weekStart.setDate(now.getDate() + diffToMonday);
+ weekStart.setHours(0, 0, 0, 0);
+ const weekEnd = new Date(weekStart);
+ weekEnd.setDate(weekStart.getDate() + 7);
+
+ (tasks || []).forEach(t => {
+   // For completed tasks: use updatedAt (= when they were marked Done)
+   // For others: use createdAt (= when the task was added this week)
+   const rawDate = t.status === 'DONE'
+     ? (t.updatedAt ? new Date(t.updatedAt) : new Date(t.createdAt))
+     : new Date(t.createdAt);
+
+   if (rawDate < weekStart || rawDate >= weekEnd) return;
+
+   // getDay: 0=Sun,1=Mon,...,6=Sat → remap to 0=Mon,...,6=Sun
+   const rawDay = rawDate.getDay();
+   const dayIdx = rawDay === 0 ? 6 : rawDay - 1;
+
+   if (t.status === 'DONE') {
+     weeklyMap[dayIdx].Completed++;
+   } else if (t.status === 'IN_PROGRESS') {
+     weeklyMap[dayIdx]['In Progress']++;
+   } else if (t.dueDate && new Date(t.dueDate) < now) {
+     weeklyMap[dayIdx].Overdue++;
+   }
+ });
+
  const barData = DAYS.map((day, i) => ({
  day,
- Completed: Math.max(0, Math.floor((completedTasks / 7) * (0.5 + Math.sin(i) * 0.5 + 0.5))),
- 'In Progress': Math.max(0, Math.floor((inProgressTasks / 7) * (0.5 + Math.cos(i) * 0.5 + 0.5))),
- Overdue: Math.max(0, Math.floor((overdueTasks / 7) * (0.3 + Math.sin(i * 2) * 0.3 + 0.3))),
+ ...weeklyMap[i],
  }));
 
  // ── Donut chart data ───────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import type { TaskItemProps } from '../../components/tasks/TaskItem';
 import { useProjects } from '../../hooks/useProjects';
@@ -6,16 +6,21 @@ import { TaskList } from '../../components/tasks/TaskList';
 import { TaskDetail } from '../../components/tasks/TaskDetail';
 import { TaskQuickAdd } from '../../components/tasks/TaskQuickAdd';
 import { useTasks } from '../../hooks/useTasks';
-import { Search, Filter, Hash } from 'lucide-react';
+import { Search, Filter, Hash, Edit2, Trash2, Check, X } from 'lucide-react';
 import { TaskListSkeleton } from '../../components/common/SkeletonLoader';
+import toast from 'react-hot-toast';
 
 export const ProjectView = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const { data: projects } = useProjects();
+  const navigate = useNavigate();
+  const { data: projects, updateProject, deleteProject } = useProjects();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState('');
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -26,7 +31,11 @@ export const ProjectView = () => {
   
   const project = projects?.find(p => p.id === projectId);
   
-  const { data: tasks, isLoading, createTask, updateTask, reorderTasks } = useTasks(projectId || 'global', filters);
+  useEffect(() => {
+    if (project?.name) setEditTitleValue(project.name);
+  }, [project?.name]);
+  
+  const { data: tasks, isLoading, createTask, updateTask, reorderTasks, deleteTask } = useTasks(projectId || 'global', filters);
 
   const handleToggle = (id: string, completed: boolean) => {
     updateTask({ id, status: completed ? 'DONE' : 'TODO' });
@@ -44,18 +53,79 @@ export const ProjectView = () => {
 
   const selectedTask = tasks?.find(t => t.id === selectedTaskId) || null;
 
+  const handleRename = async () => {
+    if (!project || editTitleValue.trim() === '' || editTitleValue === project.name) {
+      setIsEditingTitle(false);
+      return;
+    }
+    try {
+      await updateProject({ id: project.id, name: editTitleValue.trim() });
+      toast.success('Project renamed');
+      setIsEditingTitle(false);
+    } catch (err) {
+      toast.error('Failed to rename project');
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!project) return;
+    if (window.confirm('Are you sure you want to delete this project and all its tasks?')) {
+      try {
+        await deleteProject(project.id);
+        toast.success('Project deleted');
+        navigate('/inbox');
+      } catch (err) {
+        toast.error('Failed to delete project');
+      }
+    }
+  };
+
   if (!projectId) return <div>No project selected</div>;
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8 relative">
-      <div className="mb-8 flex items-center gap-3">
-        <span 
-          className="w-4 h-4 rounded-full shadow-sm" 
-          style={{ backgroundColor: project?.color ? `var(--color-${project.color}-500, ${project.color})` : 'var(--color-gray-500)' }}
-        />
-        <h1 className="text-3xl font-bold text-[var(--text-primary)]">
-          {project?.name || 'Loading project...'}
-        </h1>
+      <div className="mb-8 flex items-center justify-between">
+        <div className="flex items-center gap-3 flex-1">
+          <span 
+            className="w-4 h-4 rounded-full shadow-sm flex-shrink-0" 
+            style={{ backgroundColor: project?.color ? `var(--color-${project.color}-500, ${project.color})` : 'var(--color-gray-500)' }}
+          />
+          {isEditingTitle ? (
+            <div className="flex items-center gap-2 flex-1 max-w-sm">
+              <input
+                autoFocus
+                type="text"
+                className="w-full px-2 py-1 text-2xl font-bold bg-[var(--bg-surface)] border border-[var(--border-focus)] rounded focus:outline-none focus:ring-2 focus:ring-primary-500 text-[var(--text-primary)]"
+                value={editTitleValue}
+                onChange={(e) => setEditTitleValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleRename();
+                  if (e.key === 'Escape') {
+                    setEditTitleValue(project?.name || '');
+                    setIsEditingTitle(false);
+                  }
+                }}
+              />
+              <button onClick={handleRename} className="p-1.5 text-green-600 hover:bg-green-50 rounded"><Check size={18} /></button>
+              <button onClick={() => { setEditTitleValue(project?.name || ''); setIsEditingTitle(false); }} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded"><X size={18} /></button>
+            </div>
+          ) : (
+            <h1 
+              className="text-3xl font-bold text-[var(--text-primary)] cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-2 group"
+              onClick={() => setIsEditingTitle(true)}
+            >
+              {project?.name || 'Loading project...'}
+              <Edit2 size={16} className="opacity-0 group-hover:opacity-100 text-gray-400" />
+            </h1>
+          )}
+        </div>
+        
+        <button 
+          onClick={handleDeleteProject}
+          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1 text-sm font-medium"
+        >
+          <Trash2 size={16} /> <span className="hidden sm:inline">Delete Project</span>
+        </button>
       </div>
       
       <div className="flex items-center gap-4 mb-6">

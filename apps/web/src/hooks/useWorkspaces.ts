@@ -16,16 +16,23 @@ export interface Workspace {
 }
 
 interface WorkspaceState {
-  activeWorkspaceId: string | null;
+  activeWorkspaceId: string | null | undefined;
   setActiveWorkspaceId: (id: string | null) => void;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
-  activeWorkspaceId: localStorage.getItem('activeWorkspaceId'),
+  activeWorkspaceId: (() => {
+    const item = localStorage.getItem('activeWorkspaceId');
+    if (item === null || item === 'undefined') return undefined; // LocalStorage key missing or buggy undefined string
+    return item === 'null' ? null : item; // User explicitly selected Personal Projects
+  })(),
   setActiveWorkspaceId: (id) => {
-    if (id) localStorage.setItem('activeWorkspaceId', id);
-    else localStorage.removeItem('activeWorkspaceId');
-    set({ activeWorkspaceId: id });
+    if (id !== null && id !== undefined) {
+      localStorage.setItem('activeWorkspaceId', id);
+    } else {
+      localStorage.setItem('activeWorkspaceId', 'null');
+    }
+    set({ activeWorkspaceId: id === undefined ? null : id });
   },
 }));
 

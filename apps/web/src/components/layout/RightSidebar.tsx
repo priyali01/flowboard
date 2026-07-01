@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
-import { format, isToday, isTomorrow, isFuture } from 'date-fns';
+import { format, isToday, isTomorrow, isFuture, formatDistanceToNow } from 'date-fns';
 
 const upcomingColors = ['bg-primary-500', 'bg-green-500', 'bg-orange-500'];
 const upcomingIcons = ['📋', '🗓️', '📁'];
@@ -14,9 +14,9 @@ export const RightSidebar = () => {
         .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
         .slice(0, 3) || [];
 
-    // Recent activity (mock based on recently created tasks)
+    // Recent activity (mock based on recently updated tasks)
     const recentTasks = [...(tasks || [])]
-        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime())
         .slice(0, 3);
 
     // Calendar
@@ -95,8 +95,24 @@ export const RightSidebar = () => {
                     <div className="space-y-4">
                         {recentTasks.map((task, i) => {
                             const avatarColors = ['from-primary-500 to-blue-500', 'from-green-400 to-teal-500', 'from-orange-400 to-red-400'];
-                            const actions = ['completed', 'updated', 'created a new task'];
-                            const timeAgo = ['10m ago', '1h ago', '2h ago'];
+                            
+                            // Determine realistic action based on task status and dates
+                            let actionLabel = 'updated';
+                            if (task.status === 'DONE') actionLabel = 'completed';
+                            else if (task.createdAt === task.updatedAt) actionLabel = 'created a new task';
+
+                            // Calculate relative time
+                            let timeAgoLabel = 'just now';
+                            if (task.updatedAt || task.createdAt) {
+                                try {
+                                    timeAgoLabel = formatDistanceToNow(new Date(task.updatedAt || task.createdAt), { addSuffix: true });
+                                    // short-hand format replacements to match the UI aesthetic
+                                    timeAgoLabel = timeAgoLabel.replace('about ', '').replace('less than a minute', 'just now').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h');
+                                } catch (e) {
+                                    // fallback if date parse fails
+                                }
+                            }
+
                             return (
                                 <div key={task.id} className="flex items-start gap-3">
                                     <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
@@ -104,11 +120,11 @@ export const RightSidebar = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-xs text-gray-500 ">
-                                            You <span className="font-semibold text-gray-700 ">{actions[i % actions.length]}</span>
+                                            You <span className="font-semibold text-gray-700 ">{actionLabel}</span>
                                         </p>
                                         <p className="text-xs font-bold text-gray-800 truncate mt-0.5">{task.title}</p>
                                     </div>
-                                    <span className="text-[10px] text-gray-400 font-medium flex-shrink-0">{timeAgo[i]}</span>
+                                    <span className="text-[10px] text-gray-400 font-medium flex-shrink-0">{timeAgoLabel}</span>
                                 </div>
                             );
                         })}
@@ -159,7 +175,7 @@ export const RightSidebar = () => {
                                     className={`
  relative flex flex-col items-center justify-center h-7 text-[11px] font-semibold rounded-lg cursor-pointer transition-colors
  ${day === null ? '' : 'hover:bg-white :bg-gray-700'}
- ${isToday_ ? 'bg-gradient-to-r from-[#5961F9] via-[#A855F7] to-[#F97316] hover:opacity-90 :bg-primary-500 font-bold' : 'text-gray-600 '}
+ ${isToday_ ? 'bg-primary-500 text-white shadow-sm font-bold' : 'text-gray-600 '}
  `}
                                 >
                                     {day}

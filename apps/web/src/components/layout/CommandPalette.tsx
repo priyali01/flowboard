@@ -3,7 +3,7 @@ import { Command } from 'cmdk';
 import { useNavigate } from 'react-router-dom';
 import { useProjects } from '../../hooks/useProjects';
 import { useWorkspaceStore } from '../../hooks/useWorkspaces';
-import { Search, Inbox, Sun, Calendar, Folder, FilePlus, LogOut } from 'lucide-react';
+import { Search, Inbox, Sun, Calendar, Folder, FolderPlus, FilePlus, LogOut } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { create } from 'zustand';
 
@@ -110,6 +110,12 @@ export const CommandPalette = () => {
                 className="flex items-center px-3 py-2 mt-1 rounded-xl text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-50 aria-selected:bg-gray-50"
               >
                 <FilePlus className="w-4 h-4 mr-3 text-gray-400" /> Create new task
+              </Command.Item>
+              <Command.Item
+                onSelect={() => runCommand(() => navigate('/projects?create=true'))}
+                className="flex items-center px-3 py-2 mt-1 rounded-xl text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-50 aria-selected:bg-gray-50"
+              >
+                <FolderPlus className="w-4 h-4 mr-3 text-gray-400" /> Create new project
               </Command.Item>
               <Command.Item
                 onSelect={() => runCommand(() => { logout(); navigate('/login'); })}

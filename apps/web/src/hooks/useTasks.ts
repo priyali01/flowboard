@@ -34,8 +34,8 @@ export const useTasks = (projectId: string, filters: Record<string, string> = {}
       const { data } = await apiClient.post(`/projects/${newTask.projectId}/tasks`, newTask);
       return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', variables.projectId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 
@@ -52,8 +52,8 @@ export const useTasks = (projectId: string, filters: Record<string, string> = {}
       const { data } = await apiClient.patch(`/tasks/${id}`, updates);
       return data;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', data.projectId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 

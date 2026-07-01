@@ -9,10 +9,12 @@ export const WorkspaceSwitcher = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  const activeWorkspace = workspaces?.find(w => w.id === activeWorkspaceId) || workspaces?.[0];
+  const activeWorkspace = activeWorkspaceId === null 
+    ? null 
+    : (workspaces?.find(w => w.id === activeWorkspaceId) || workspaces?.[0]);
 
   React.useEffect(() => {
-    if (workspaces && workspaces.length > 0 && !activeWorkspaceId) {
+    if (workspaces && workspaces.length > 0 && activeWorkspaceId === undefined) {
       setActiveWorkspaceId(workspaces[0].id);
     }
   }, [workspaces, activeWorkspaceId, setActiveWorkspaceId]);
@@ -35,10 +37,21 @@ export const WorkspaceSwitcher = () => {
           className="w-full flex items-center justify-between p-2 rounded-md hover:bg-gray-200 transition-colors"
         >
           <div className="flex items-center space-x-2 truncate">
-            <div className="h-6 w-6 rounded bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
-              {activeWorkspace?.name?.charAt(0).toUpperCase()}
-            </div>
-            <span className="font-semibold text-gray-900 truncate">{activeWorkspace?.name}</span>
+            {activeWorkspace ? (
+              <>
+                <div className="h-6 w-6 rounded bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                  {activeWorkspace.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="font-semibold text-gray-900 truncate">{activeWorkspace.name}</span>
+              </>
+            ) : (
+              <>
+                <div className="h-6 w-6 rounded bg-gray-400 flex items-center justify-center text-white font-bold text-sm">
+                  P
+                </div>
+                <span className="font-semibold text-gray-900 truncate">Personal Projects</span>
+              </>
+            )}
           </div>
           <ChevronDown size={16} className="text-gray-500" />
         </button>
@@ -59,8 +72,20 @@ export const WorkspaceSwitcher = () => {
                   </button>
                 </li>
               ))}
+              <li key="personal">
+                <button
+                  onClick={() => {
+                    setActiveWorkspaceId(null);
+                    setIsOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                >
+                  <div className="h-5 w-5 rounded bg-gray-400 flex items-center justify-center text-white text-xs font-bold">P</div>
+                  Personal Projects
+                </button>
+              </li>
             </ul>
-            <div className="border-t border-gray-100">
+            <div className="border-t border-gray-200 py-1">
               <button 
                 onClick={handleCreate}
                 className="w-full flex items-center px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"

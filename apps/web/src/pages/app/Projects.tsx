@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useProjects } from '../../hooks/useProjects';
 import { Plus, FolderOpen, CheckCircle2, Circle, Loader2 } from 'lucide-react';
 
@@ -83,8 +83,16 @@ const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
 
 export const Projects = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: projects, isLoading } = useProjects();
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  useEffect(() => {
+    if (location.search.includes('create=true')) {
+      setShowCreateModal(true);
+      navigate('/projects', { replace: true });
+    }
+  }, [location.search, navigate]);
 
   if (isLoading) {
     return (
@@ -105,16 +113,16 @@ export const Projects = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
+    <div className="px-2 sm:px-4 md:px-6 py-4 md:py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Projects</h1>
           <p className="text-sm text-gray-500 mt-0.5">{projects?.length || 0} project{projects?.length !== 1 ? 's' : ''} in your workspace</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#5961F9] via-[#A855F7] to-[#F97316] text-white rounded-xl text-sm font-bold hover:opacity-90 shadow-md shadow-indigo-200 hover:shadow-lg transition-all"
+          className="self-start sm:self-auto flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#5961F9] via-[#A855F7] to-[#F97316] text-white rounded-xl text-sm font-bold hover:opacity-90 shadow-md shadow-indigo-200 hover:shadow-lg transition-all"
         >
           <Plus size={16} /> New Project
         </button>
@@ -136,7 +144,7 @@ export const Projects = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
           {projects.map((project) => (
             <button
               key={project.id}

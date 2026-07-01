@@ -2,8 +2,8 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import {
   LayoutDashboard, CheckSquare, FolderOpen, CalendarDays, Users,
-  BarChart2, MessageSquare, Settings, Plus, Search,
-  Tag, LayoutTemplate, LogOut
+  BarChart2, MessageSquare, Plus, Search,
+  Tag, LayoutTemplate, LogOut, User, Settings, Lock, Bell, Palette, HelpCircle, Menu, X
 } from 'lucide-react';
 import { LabelManagerModal } from '../labels/LabelManagerModal';
 import { TemplatesModal } from '../tasks/TemplatesModal';
@@ -56,6 +56,7 @@ export const AppLayout = () => {
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -70,7 +71,6 @@ export const AppLayout = () => {
     { to: '/team', icon: Users, label: 'Team' },
     { to: '/analytics', icon: BarChart2, label: 'Reports' },
     { to: '/messages', icon: MessageSquare, label: 'Messages' },
-    { to: '/settings', icon: Settings, label: 'Settings' },
   ];
 
   const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => {
@@ -78,6 +78,7 @@ export const AppLayout = () => {
     return (
       <Link
         to={to}
+        onClick={() => setSidebarOpen(false)}
         className={cn(
           'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all',
           isActive
@@ -106,152 +107,219 @@ export const AppLayout = () => {
     return 'Good evening';
   };
 
-  return (
-    <div className="flex h-screen overflow-hidden relative">
-      <AuroraBackground />
-      {/* ── LEFT SIDEBAR ── */}
-      <aside className="w-[240px] flex-shrink-0 bg-white/60 backdrop-blur-xl border-r border-white/50 flex flex-col z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-        {/* Logo */}
-        <div className="h-16 flex items-center px-5 border-b border-white/50">
-          <img src="/logo.png" alt="FlowBoard" className="h-8 object-contain" />
-        </div>
+  const SidebarContent = () => (
+    <>
+      {/* Logo */}
+      <div className="h-16 flex items-center px-5 border-b border-white/50 flex-shrink-0">
+        <img src="/logo.png" alt="FlowBoard" className="h-8 object-contain" />
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="ml-auto lg:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          <X size={18} />
+        </button>
+      </div>
 
-        {/* Offline/Syncing notice */}
-        {(!isOnline || isSyncing) && (
-          <div className="px-4 py-2">
-            {!isOnline && (
-              <div className="text-xs font-medium text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg text-center shadow-sm">
-                Offline Mode
-              </div>
-            )}
-            {isSyncing && (
-              <div className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg text-center shadow-sm">
-                Syncing...
-              </div>
-            )}
+      {/* Offline/Syncing notice */}
+      {(!isOnline || isSyncing) && (
+        <div className="px-4 py-2 flex-shrink-0">
+          {!isOnline && (
+            <div className="text-xs font-medium text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg text-center shadow-sm">
+              Offline Mode
+            </div>
+          )}
+          {isSyncing && (
+            <div className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg text-center shadow-sm">
+              Syncing...
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {navItems.map((item) => (
+          <NavItem key={item.to} {...item} />
+        ))}
+
+        {/* Project quick-links */}
+        {projects && projects.length > 0 && (
+          <div className="px-3 pt-2">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1 mb-1">Your Projects</p>
+            {projects.slice(0, 6).map((p) => (
+              <Link
+                key={p.id}
+                to={`/projects/${p.id}`}
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all truncate',
+                  location.pathname === `/projects/${p.id}`
+                    ? 'bg-white/70 text-gray-800'
+                    : 'text-gray-500 hover:text-gray-800 hover:bg-white/40'
+                )}
+              >
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color || '#5961F9' }} />
+                <span className="truncate">{p.name}</span>
+              </Link>
+            ))}
           </div>
         )}
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          {navItems.map((item) => (
-            <NavItem key={item.to} {...item} />
-          ))}
-
-          {/* Project quick-links */}
-          {projects && projects.length > 0 && (
-            <div className="px-3 pt-2">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1 mb-1">Your Projects</p>
-              {projects.slice(0, 6).map((p) => (
-                <Link
-                  key={p.id}
-                  to={`/projects/${p.id}`}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all truncate',
-                    location.pathname === `/projects/${p.id}`
-                      ? 'bg-white/70 text-gray-800'
-                      : 'text-gray-500 hover:text-gray-800 hover:bg-white/40'
-                  )}
-                >
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color || '#5961F9' }} />
-                  <span className="truncate">{p.name}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          <div className="pt-4 border-t border-white/50 mt-4 space-y-1">
-            <button
-              onClick={() => setShowLabelModal(true)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-white/60 hover:text-gray-900 transition-all"
-            >
-              <Tag size={18} className="text-gray-500" />
-              Labels
-            </button>
-            <button
-              onClick={() => setShowTemplatesModal(true)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-white/60 hover:text-gray-900 transition-all"
-            >
-              <LayoutTemplate size={18} className="text-gray-500" />
-              Templates
-            </button>
-          </div>
-        </nav>
-
-
-
-        {/* User Profile Footer */}
-        <div className="px-4 pb-4">
-          <div
-            className="flex items-center gap-3 p-3 bg-white/50 backdrop-blur-md rounded-2xl hover:bg-white/80 border border-white/40 cursor-pointer transition-all shadow-sm"
-            onClick={() => setShowUserMenu(!showUserMenu)}
+        <div className="pt-4 border-t border-white/50 mt-4 space-y-1">
+          <button
+            onClick={() => { setShowLabelModal(true); setSidebarOpen(false); }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-white/60 hover:text-gray-900 transition-all"
           >
-            <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-primary-500 to-purple-400 flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0 border-2 border-white">
-              {user?.name?.[0]?.toUpperCase() || 'U'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-800 truncate">{user?.name}</p>
-              <p className="text-xs text-gray-500 truncate">{user?.email?.split('@')[0]}</p>
-            </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); handleLogout(); }}
-              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-              title="Logout"
-            >
-              <LogOut size={14} />
-            </button>
-          </div>
+            <Tag size={18} className="text-gray-500" />
+            Labels
+          </button>
+          <button
+            onClick={() => { setShowTemplatesModal(true); setSidebarOpen(false); }}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-white/60 hover:text-gray-900 transition-all"
+          >
+            <LayoutTemplate size={18} className="text-gray-500" />
+            Templates
+          </button>
         </div>
+      </nav>
+    </>
+  );
+
+  return (
+    <div className="flex h-screen overflow-hidden relative">
+      <AuroraBackground />
+
+      {/* ── MOBILE SIDEBAR OVERLAY ── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-gray-900/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── LEFT SIDEBAR ── */}
+      <aside
+        className={cn(
+          'fixed lg:relative inset-y-0 left-0 z-40 w-[240px] flex-shrink-0',
+          'bg-white/80 backdrop-blur-xl border-r border-white/50 flex flex-col',
+          'shadow-[4px_0_24px_rgba(0,0,0,0.05)] transition-transform duration-300 ease-in-out',
+          'lg:translate-x-0',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        <SidebarContent />
       </aside>
 
       {/* ── MAIN CONTENT AREA ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white/40 backdrop-blur-xl">
         {/* Top Header */}
-        <header className="h-16 flex items-center justify-between px-8 bg-transparent border-b border-white/50 z-10 flex-shrink-0">
+        <header className="h-14 md:h-16 flex items-center justify-between px-3 sm:px-5 md:px-8 bg-transparent border-b border-white/50 z-10 flex-shrink-0 gap-2">
           {/* Left: Greeting */}
-          <div>
-            <h2 className="text-base font-bold text-gray-900">
-              {greeting()}, {user?.name?.split(' ')[0] || 'there'} 👋
-            </h2>
-            <p className="text-xs text-gray-600 font-medium">Let's make today productive!</p>
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-xl text-gray-500 hover:bg-white/60 hover:text-gray-900 transition-all flex-shrink-0"
+              aria-label="Open menu"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="hidden sm:block min-w-0">
+              <h2 className="text-sm md:text-base font-bold text-gray-900 truncate">
+                {greeting()}, {user?.name?.split(' ')[0] || 'there'} 👋
+              </h2>
+              <p className="text-xs text-gray-600 font-medium hidden md:block">Let's make today productive!</p>
+            </div>
           </div>
 
           {/* Center: Search — opens Command Palette */}
-          <div className="flex-1 max-w-sm mx-8">
+          <div className="flex-1 max-w-[140px] sm:max-w-xs md:max-w-sm mx-1 sm:mx-4 md:mx-8">
             <button
               onClick={() => useCommandPaletteStore.getState().setOpen(true)}
-              className="w-full flex items-center gap-2 px-4 py-2 bg-white/60 hover:bg-white/80 border border-white/50 rounded-xl text-sm text-gray-500 transition-all shadow-sm"
+              className="w-full flex items-center gap-2 px-3 py-2 bg-white/60 hover:bg-white/80 border border-white/50 rounded-xl text-sm text-gray-500 transition-all shadow-sm"
             >
               <Search size={16} className="text-gray-400 flex-shrink-0" />
-              <span className="flex-1 text-left">Search tasks, projects...</span>
-              <kbd className="hidden sm:inline-flex text-[10px] font-mono text-gray-400 bg-gray-100/80 border border-gray-200 rounded px-1.5 py-0.5">Ctrl K</kbd>
+              <span className="flex-1 text-left text-xs sm:text-sm truncate">Search tasks, projects...</span>
+              <kbd className="hidden md:inline-flex text-[10px] font-mono text-gray-400 bg-gray-100/80 border border-gray-200 rounded px-1.5 py-0.5">Ctrl K</kbd>
             </button>
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0">
             <div className="relative">
               <NotificationTray />
             </div>
             <button
               id="new-task-btn"
               onClick={() => setShowNewTaskModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#5961F9] via-[#A855F7] to-[#F97316] hover:opacity-90 text-white rounded-xl text-sm font-bold shadow-md shadow-primary-500/20 hover:shadow-lg transition-all"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 bg-gradient-to-r from-[#5961F9] via-[#A855F7] to-[#F97316] hover:opacity-90 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-primary-500/20 hover:shadow-lg transition-all"
             >
-              <Plus size={16} />
-              New Task
+              <Plus size={15} />
+              <span className="hidden sm:inline">New Task</span>
             </button>
+
+            {/* Account Menu */}
+            <div className="relative ml-0.5 sm:ml-2">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-tr from-primary-500 to-purple-400 flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-md border-2 border-white hover:scale-105 transition-transform"
+              >
+                {user?.name?.[0]?.toUpperCase() || 'U'}
+              </button>
+              
+              {showUserMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                  <div className="absolute right-0 mt-2 w-56 sm:w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in duration-200">
+                    <div className="px-4 py-3 border-b border-gray-100 mb-2">
+                      <p className="text-sm font-bold text-gray-900 truncate">{user?.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    </div>
+                    
+                    <div className="px-2 space-y-1">
+                      <Link to="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors">
+                        <User size={16} className="text-gray-400" /> My Profile
+                      </Link>
+                      <Link to="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors">
+                        <Settings size={16} className="text-gray-400" /> Account Settings
+                      </Link>
+                      <Link to="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors">
+                        <Palette size={16} className="text-gray-400" /> Appearance
+                      </Link>
+                      <Link to="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors">
+                        <Bell size={16} className="text-gray-400" /> Notifications
+                      </Link>
+                      <Link to="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors">
+                        <Lock size={16} className="text-gray-400" /> Security
+                      </Link>
+                    </div>
+                    
+                    <div className="mt-2 pt-2 border-t border-gray-100 px-2 space-y-1">
+                      <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                        <HelpCircle size={16} className="text-gray-400" /> Help & Support
+                      </button>
+                      <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                        <LogOut size={16} className="text-red-400" /> Sign Out
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </header>
 
         {/* Main + Right Sidebar */}
         <main className="flex-1 overflow-hidden flex">
-          <div className="flex-1 overflow-y-auto px-8 py-6">
+          <div className="flex-1 overflow-y-auto px-3 sm:px-5 md:px-8 py-4 md:py-6">
             <div className="max-w-5xl mx-auto">
               <Outlet />
             </div>
           </div>
-          <RightSidebar />
+          {!location.pathname.startsWith('/settings') && (
+            <div className="hidden xl:block">
+              <RightSidebar />
+            </div>
+          )}
         </main>
       </div>
 

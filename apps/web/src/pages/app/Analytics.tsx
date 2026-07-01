@@ -49,17 +49,7 @@ export const Analytics = () => {
  return { name: dayName, completed: count };
  });
 
- // Since we might not have real historical data in development, let's mock the line chart if it's all zeros
- const hasHistory = completionsByDay.some(d => d.completed > 0);
- const trendData = hasHistory ? completionsByDay : [
- { name: 'Mon', completed: 2 },
- { name: 'Tue', completed: 5 },
- { name: 'Wed', completed: 3 },
- { name: 'Thu', completed: 7 },
- { name: 'Fri', completed: 4 },
- { name: 'Sat', completed: 1 },
- { name: 'Sun', completed: 6 },
- ];
+ const trendData = completionsByDay;
 
  const StatCard = ({ title, value, icon: Icon, colorClass }: any) => (
  <div className="bg-[var(--bg-surface)] p-6 rounded-2xl border border-[var(--border-default)] shadow-sm">
