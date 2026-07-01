@@ -110,9 +110,9 @@ export const Today = () => {
   const completedCount = completedTasks.length;
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8 relative">
+    <div className="pb-8 relative">
       {/* ── Page Header ── */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-black text-gray-900 tracking-tight">My Tasks</h1>
         <p className="text-gray-500 mt-1 font-medium">View and manage all your tasks across projects.</p>
       </div>

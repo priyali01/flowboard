@@ -17,7 +17,7 @@ export const Upcoming = () => {
  end.setDate(end.getDate() + 7);
  end.setHours(23, 59, 59, 999);
 
- const { data: tasks, isLoading, updateTask, reorderTasks } = useTasks('global', {
+ const { data: tasks, isLoading, updateTask, reorderTasks, deleteTask } = useTasks('global', {
  dueDateStart: start.toISOString(),
  dueDateEnd: end.toISOString(),
  });
@@ -34,7 +34,7 @@ export const Upcoming = () => {
  const selectedTask = tasks?.find(t => t.id === selectedTaskId) || null;
 
  return (
- <div className="max-w-3xl mx-auto px-6 py-8 relative">
+ <div className="pb-8 relative">
  <div className="mb-8">
  <h1 className="text-3xl font-bold text-[var(--text-primary)]">Upcoming</h1>
  <p className="text-[var(--text-secondary)] mt-1">Next 7 Days</p>

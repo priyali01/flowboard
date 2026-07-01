@@ -240,12 +240,7 @@ export class TaskController {
       const userId = (req as any).user.userId;
       
       const projects = await prisma.project.findMany({
-        where: {
-          OR: [
-            { ownerId: userId },
-            { workspace: { members: { some: { userId } } } }
-          ]
-        },
+        where: { ownerId: userId },
         select: { id: true }
       });
       const projectIds = projects.map(p => p.id);

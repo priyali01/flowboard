@@ -96,7 +96,7 @@ export const Projects = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="pb-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="h-8 w-32 bg-gray-200 rounded-xl animate-pulse mb-2"></div>

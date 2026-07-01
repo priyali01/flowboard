@@ -50,11 +50,11 @@ export const ProjectList = () => {
  </div>
  <div className="space-y-1 px-2">
  {projects?.map(project => {
- const isActive = location.pathname === `/project/${project.id}`;
+ const isActive = location.pathname === `/projects/${project.id}`;
  return (
  <div key={project.id} className="group relative flex items-center">
  <Link 
- to={`/project/${project.id}`} 
+ to={`/projects/${project.id}`} 
  className={cn(
  "flex-1 flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
  isActive 

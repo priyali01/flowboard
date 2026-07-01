@@ -83,7 +83,7 @@ export const ProjectView = () => {
   if (!projectId) return <div>No project selected</div>;
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 relative">
+    <div className="pb-8 relative">
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1">
           <span 

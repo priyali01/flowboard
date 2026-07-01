@@ -15,15 +15,14 @@ export class TemplateController {
   async getTemplates(req: Request, res: Response) {
     try {
       const userId = (req as any).user.userId;
-      const workspaceId = String(req.params.workspaceId);
-
-      const member = await prisma.workspaceMember.findUnique({
-        where: { workspaceId_userId: { workspaceId, userId } }
+      const workspaces = await prisma.workspaceMember.findMany({
+        where: { userId },
+        select: { workspaceId: true }
       });
-      if (!member) return res.status(403).json({ error: 'Not authorized' });
+      const workspaceIds = workspaces.map(w => w.workspaceId);
 
       const templates = await prisma.taskTemplate.findMany({
-        where: { workspaceId },
+        where: { workspaceId: { in: workspaceIds } },
         orderBy: { createdAt: 'desc' }
       });
       res.json(templates);

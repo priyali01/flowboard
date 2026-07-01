@@ -15,19 +15,8 @@ export class ProjectController {
       const userId = (req as any).user.userId;
       const workspaceId = req.query.workspaceId as string | undefined;
 
-      let whereClause: any = {};
-      if (workspaceId) {
-        const member = await prisma.workspaceMember.findUnique({
-          where: { workspaceId_userId: { workspaceId, userId } }
-        });
-        if (!member) return res.status(403).json({ error: 'Not authorized' });
-        whereClause.workspaceId = workspaceId;
-      } else {
-        whereClause.ownerId = userId;
-      }
-
       const projects = await prisma.project.findMany({
-        where: whereClause,
+        where: { ownerId: userId },
         orderBy: { createdAt: 'desc' },
       });
       res.json(projects);

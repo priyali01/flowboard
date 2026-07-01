@@ -66,7 +66,7 @@ export const Analytics = () => {
  );
 
  return (
- <div className="max-w-6xl mx-auto px-6 py-8 relative">
+ <div className="pb-8 relative">
  <div className="mb-8">
  <h1 className="text-3xl font-bold text-[var(--text-primary)]">Analytics Overview</h1>
  <p className="text-[var(--text-secondary)] mt-1">Track your productivity and task progress.</p>

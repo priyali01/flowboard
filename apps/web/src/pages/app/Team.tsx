@@ -37,7 +37,7 @@ export const TeamPage = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8">
+    <div className="pb-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Team</h1>
         <p className="text-sm text-gray-500 mt-0.5">Manage your workspace members and roles</p>
