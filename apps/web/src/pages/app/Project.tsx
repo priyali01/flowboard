@@ -21,6 +21,8 @@ export const ProjectView = () => {
   
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitleValue, setEditTitleValue] = useState('');
+  
+  const [sortBy, setSortBy] = useState<'default' | 'dueDate' | 'priority' | 'alphabetical'>('default');
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -37,11 +39,38 @@ export const ProjectView = () => {
   
   const { data: tasks, isLoading, createTask, updateTask, reorderTasks, deleteTask } = useTasks(projectId || 'global', filters);
 
+  const processedTasks = useMemo(() => {
+    if (!tasks) return [];
+    let result = [...tasks];
+    
+    if (sortBy === 'dueDate') {
+      result.sort((a, b) => {
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      });
+    } else if (sortBy === 'priority') {
+      const pMap = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
+      result.sort((a, b) => (pMap[b.priority as keyof typeof pMap] || 0) - (pMap[a.priority as keyof typeof pMap] || 0));
+    } else if (sortBy === 'alphabetical') {
+      result.sort((a, b) => a.title.localeCompare(b.title));
+    } else {
+      // default: position
+      result.sort((a, b) => (a.position || 0) - (b.position || 0));
+    }
+    return result;
+  }, [tasks, sortBy]);
+
   const handleToggle = (id: string, completed: boolean) => {
     updateTask({ id, status: completed ? 'DONE' : 'TODO' });
   };
 
   const handleReorder = (reorderedTasks: TaskItemProps['task'][]) => {
+    // Only allow reordering if we are in default sort mode
+    if (sortBy !== 'default') {
+      toast.error("Can't reorder while sorted by " + sortBy);
+      return;
+    }
     const updates = reorderedTasks.map((t, index) => ({ id: t.id, position: index }));
     reorderTasks(updates);
   };
@@ -162,6 +191,16 @@ export const ProjectView = () => {
             <option value="HIGH">High</option>
             <option value="URGENT">Urgent</option>
           </select>
+          <select
+            className="bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-lg text-sm shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 py-2 pl-3 pr-8 text-[var(--text-primary)]"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+          >
+            <option value="default">Default Sort</option>
+            <option value="dueDate">Due Date</option>
+            <option value="priority">Priority</option>
+            <option value="alphabetical">Alphabetical</option>
+          </select>
         </div>
       </div>
       
@@ -172,9 +211,9 @@ export const ProjectView = () => {
         <div className="p-2">
           {isLoading ? (
             <TaskListSkeleton />
-          ) : tasks && tasks.length > 0 ? (
+          ) : processedTasks && processedTasks.length > 0 ? (
             <TaskList 
-              tasks={tasks} 
+              tasks={processedTasks} 
               onToggle={handleToggle}
               onClick={(id) => setSelectedTaskId(id)}
               onReorder={handleReorder}
