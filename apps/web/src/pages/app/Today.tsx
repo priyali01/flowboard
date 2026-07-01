@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { TaskItemProps } from '../../components/tasks/TaskItem';
 import { TaskList } from '../../components/tasks/TaskList';
 import { TaskDetail } from '../../components/tasks/TaskDetail';
@@ -51,6 +51,30 @@ export const Today = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'All Tasks' | 'Today' | 'Upcoming' | 'Overdue' | 'Completed'>('All Tasks');
   
+  // Advanced Filter/Sort State
+  const [sortBy, setSortBy] = useState<'default' | 'dueDate' | 'priority' | 'alphabetical'>('default');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [filterPriority, setFilterPriority] = useState<string[]>([]);
+  
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  
+  const filterRef = useRef<HTMLDivElement>(null);
+  const sortRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilterMenu(false);
+      }
+      if (sortRef.current && !sortRef.current.contains(event.target as Node)) {
+        setShowSortMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Expanded states for groups
   const [expandedGroups, setExpandedGroups] = useState({
     overdue: true,
@@ -77,13 +101,45 @@ export const Today = () => {
   const selectedTask = tasks?.find(t => t.id === selectedTaskId) || null;
 
   // ── Group Tasks ────────────────────────────────────────────────────────
-  const { todayTasks, upcomingTasks, overdueTasks, completedTasks } = useMemo(() => {
+  const { todayTasks, upcomingTasks, overdueTasks, completedTasks, filteredTotalCount } = useMemo(() => {
+    let processedTasks = [...(tasks || [])];
+
+    // 1. FILTERING
+    if (filterPriority.length > 0) {
+      processedTasks = processedTasks.filter(t => filterPriority.includes(t.priority));
+    }
+
+    // 2. SORTING
+    if (sortBy !== 'default') {
+      processedTasks.sort((a, b) => {
+        let valA: any = 0;
+        let valB: any = 0;
+        
+        if (sortBy === 'alphabetical') {
+          valA = a.title.toLowerCase();
+          valB = b.title.toLowerCase();
+        } else if (sortBy === 'priority') {
+          const pMap = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
+          valA = pMap[a.priority as keyof typeof pMap] || 0;
+          valB = pMap[b.priority as keyof typeof pMap] || 0;
+        } else if (sortBy === 'dueDate') {
+          valA = a.dueDate ? new Date(a.dueDate).getTime() : (sortDir === 'asc' ? Infinity : -Infinity);
+          valB = b.dueDate ? new Date(b.dueDate).getTime() : (sortDir === 'asc' ? Infinity : -Infinity);
+        }
+
+        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    // 3. GROUPING
     const today: TaskItemProps['task'][] = [];
     const upcoming: TaskItemProps['task'][] = [];
     const overdue: TaskItemProps['task'][] = [];
     const completed: TaskItemProps['task'][] = [];
 
-    (tasks || []).forEach(task => {
+    processedTasks.forEach(task => {
       if (task.status === 'DONE') {
         completed.push(task);
         return;
@@ -104,12 +160,18 @@ export const Today = () => {
       }
     });
 
-    return { todayTasks: today, upcomingTasks: upcoming, overdueTasks: overdue, completedTasks: completed };
-  }, [tasks]);
+    return { 
+      todayTasks: today, 
+      upcomingTasks: upcoming, 
+      overdueTasks: overdue, 
+      completedTasks: completed,
+      filteredTotalCount: processedTasks.length
+    };
+  }, [tasks, filterPriority, sortBy, sortDir]);
 
   const filters = ['All Tasks', 'Today', 'Upcoming', 'Overdue', 'Completed'] as const;
 
-  const totalTasksCount = tasks?.length || 0;
+  const totalTasksCount = filteredTotalCount;
   const todayCount = todayTasks.length;
   const overdueCount = overdueTasks.length;
   const completedCount = completedTasks.length;
@@ -171,7 +233,7 @@ export const Today = () => {
       </motion.div>
 
       {/* ── Filter / Sort Actions ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-white/60 backdrop-blur-xl p-2 rounded-2xl border border-gray-200/50 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-white/60 backdrop-blur-xl p-2 rounded-2xl border border-gray-200/50 shadow-sm relative z-40">
         <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
           {filters.map(filter => (
             <button
@@ -201,14 +263,105 @@ export const Today = () => {
         </div>
 
         <div className="flex items-center gap-2 px-2 shrink-0">
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
-            <SlidersHorizontal size={14} />
-            Filters
-          </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200">
-            <ArrowUpDown size={14} />
-            Sort
-          </button>
+          
+          {/* Filters Button & Menu */}
+          <div className="relative" ref={filterRef}>
+            <button 
+              onClick={() => setShowFilterMenu(!showFilterMenu)}
+              className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border", showFilterMenu || filterPriority.length > 0 ? "bg-primary-50 text-primary-600 border-primary-200" : "text-gray-600 hover:bg-gray-100 border-transparent hover:border-gray-200")}
+            >
+              <SlidersHorizontal size={14} />
+              Filters
+              {filterPriority.length > 0 && <span className="ml-1 bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-md text-[10px]">{filterPriority.length}</span>}
+            </button>
+            <AnimatePresence>
+              {showFilterMenu && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 p-3 z-50"
+                >
+                  <p className="text-xs font-bold text-gray-500 mb-2 uppercase px-1">Priority</p>
+                  <div className="space-y-1">
+                    {['URGENT', 'HIGH', 'MEDIUM', 'LOW'].map(p => (
+                      <label key={p} className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 rounded-lg cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                          checked={filterPriority.includes(p)}
+                          onChange={(e) => {
+                            if (e.target.checked) setFilterPriority([...filterPriority, p]);
+                            else setFilterPriority(filterPriority.filter(x => x !== p));
+                          }}
+                        />
+                        <span className="text-sm font-medium text-gray-700">{p}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {filterPriority.length > 0 && (
+                    <button 
+                      onClick={() => setFilterPriority([])}
+                      className="w-full mt-2 text-xs font-bold text-gray-500 hover:text-gray-800 text-left px-3 py-1.5"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Sort Button & Menu */}
+          <div className="relative" ref={sortRef}>
+            <button 
+              onClick={() => setShowSortMenu(!showSortMenu)}
+              className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border", showSortMenu || sortBy !== 'default' ? "bg-primary-50 text-primary-600 border-primary-200" : "text-gray-600 hover:bg-gray-100 border-transparent hover:border-gray-200")}
+            >
+              <ArrowUpDown size={14} />
+              Sort
+            </button>
+            <AnimatePresence>
+              {showSortMenu && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 p-2 z-50"
+                >
+                  <div className="space-y-1">
+                    {[
+                      { id: 'default', label: 'Default' },
+                      { id: 'dueDate', label: 'Due Date' },
+                      { id: 'priority', label: 'Priority' },
+                      { id: 'alphabetical', label: 'Alphabetical' }
+                    ].map(s => (
+                      <button 
+                        key={s.id}
+                        onClick={() => {
+                          if (sortBy === s.id && s.id !== 'default') {
+                            setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+                          } else {
+                            setSortBy(s.id as any);
+                            setSortDir('asc');
+                          }
+                        }}
+                        className={cn("w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors", sortBy === s.id ? "bg-primary-50 text-primary-700" : "text-gray-700 hover:bg-gray-50")}
+                      >
+                        {s.label}
+                        {sortBy === s.id && s.id !== 'default' && (
+                          <span className="text-[10px] bg-primary-100 px-1.5 py-0.5 rounded text-primary-600 uppercase font-bold">
+                            {sortDir}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
         </div>
       </div>
 

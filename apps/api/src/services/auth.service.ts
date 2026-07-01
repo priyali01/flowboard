@@ -19,4 +19,12 @@ export class AuthService {
     const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: '30d' });
     return { accessToken, refreshToken };
   }
+
+  verifyRefreshToken(token: string): { userId: string } | null {
+    try {
+      return jwt.verify(token, JWT_REFRESH_SECRET) as { userId: string };
+    } catch {
+      return null;
+    }
+  }
 }

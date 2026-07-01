@@ -201,7 +201,12 @@ export const Inbox = () => {
  {/* ── Charts Row ── */}
  <div className="grid grid-cols-5 gap-4">
  {/* Task Overview Bar Chart */}
- <div className="col-span-3 bg-white rounded-2xl p-5 shadow-sm border border-[var(--border-default)]">
+ <motion.div 
+   initial={{ opacity: 0, x: -30 }}
+   animate={{ opacity: 1, x: 0 }}
+   transition={{ duration: 0.8, ease: "easeOut" }}
+   className="col-span-3 bg-white rounded-2xl p-5 shadow-sm border border-[var(--border-default)]"
+ >
  <div className="flex items-center justify-between mb-5">
  <h2 className="text-base font-bold text-gray-800 ">Task Overview</h2>
  <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
@@ -235,10 +240,15 @@ export const Inbox = () => {
  </div>
  ))}
  </div>
- </div>
+ </motion.div>
 
  {/* My Progress Donut */}
- <div className="col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-[var(--border-default)]">
+ <motion.div 
+   initial={{ opacity: 0, x: 30 }}
+   animate={{ opacity: 1, x: 0 }}
+   transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+   className="col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-[var(--border-default)]"
+ >
  <div className="flex items-center justify-between mb-3">
  <h2 className="text-base font-bold text-gray-800 ">My Progress</h2>
  <MoreHorizontal size={16} className="text-gray-400 cursor-pointer" />
@@ -283,7 +293,7 @@ export const Inbox = () => {
  </div>
  ))}
  </div>
- </div>
+ </motion.div>
  </div>
 
  {/* ── My Tasks Section ── */}

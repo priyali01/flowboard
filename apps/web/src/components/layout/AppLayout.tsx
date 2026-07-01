@@ -138,16 +138,18 @@ export const AppLayout = () => {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {navItems.map((item) => (
-          <NavItem key={item.to} {...item} />
-        ))}
+      <nav className="flex-1 flex flex-col px-3 py-4 overflow-hidden">
+        <div className="space-y-1 flex-shrink-0">
+          {navItems.map((item) => (
+            <NavItem key={item.to} {...item} />
+          ))}
+        </div>
 
         {/* Project quick-links */}
         {projects && projects.length > 0 && (
-          <div className="px-3 pt-2">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1 mb-1">Your Projects</p>
-            {projects.slice(0, 6).map((p) => (
+          <div className="flex-1 overflow-y-auto mt-2 px-3 pt-2 min-h-0 hide-scrollbar space-y-0.5">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1 mb-2">Your Projects</p>
+            {projects.map((p) => (
               <Link
                 key={p.id}
                 to={`/projects/${p.id}`}
@@ -166,7 +168,7 @@ export const AppLayout = () => {
           </div>
         )}
 
-        <div className="pt-4 border-t border-white/50 mt-4 space-y-1">
+        <div className="flex-shrink-0 pt-4 border-t border-white/50 mt-4 space-y-1">
           <button
             onClick={() => { setShowLabelModal(true); setSidebarOpen(false); }}
             className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-white/60 hover:text-gray-900 transition-all"
@@ -311,15 +313,15 @@ export const AppLayout = () => {
 
         {/* Main + Right Sidebar */}
         <main className="flex-1 overflow-hidden flex">
-          <div className="flex-1 overflow-y-auto px-3 sm:px-5 md:px-8 py-4 md:py-6">
+          <div className="flex-1 overflow-y-auto px-3 sm:px-5 md:px-8 py-4 md:py-6 relative z-20">
             <div className="max-w-5xl mx-auto h-full">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={location.pathname}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  initial={{ opacity: 0, filter: 'blur(5px)', scale: 0.98 }}
+                  animate={{ opacity: 1, filter: 'blur(0px)', scale: 1, transitionEnd: { filter: 'none', transform: 'none' } }}
+                  exit={{ opacity: 0, filter: 'blur(5px)', scale: 0.98 }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                   className="h-full"
                 >
                   <Outlet />
