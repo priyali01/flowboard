@@ -76,26 +76,28 @@ export const Inbox = () => {
  weekEnd.setDate(weekStart.getDate() + 7);
 
  (tasks || []).forEach(t => {
-   // For completed tasks: use updatedAt (= when they were marked Done)
-   // For others: use createdAt (= when the task was added this week)
-   const rawDate = t.status === 'DONE'
-     ? (t.updatedAt ? new Date(t.updatedAt) : new Date(t.createdAt))
-     : new Date(t.createdAt);
+    let targetDate: Date | null = null;
+    let category: 'Completed' | 'In Progress' | 'Overdue' | null = null;
 
-   if (rawDate < weekStart || rawDate >= weekEnd) return;
+    if (t.status === 'DONE') {
+      targetDate = new Date(t.updatedAt || t.createdAt);
+      category = 'Completed';
+    } else if (t.status === 'IN_PROGRESS') {
+      targetDate = new Date(t.updatedAt || t.createdAt);
+      category = 'In Progress';
+    } else if (t.dueDate && new Date(t.dueDate) < now) {
+      targetDate = new Date(t.dueDate);
+      category = 'Overdue';
+    }
 
-   // getDay: 0=Sun,1=Mon,...,6=Sat → remap to 0=Mon,...,6=Sun
-   const rawDay = rawDate.getDay();
-   const dayIdx = rawDay === 0 ? 6 : rawDay - 1;
+    if (!targetDate || !category) return;
+    if (targetDate < weekStart || targetDate >= weekEnd) return;
 
-   if (t.status === 'DONE') {
-     weeklyMap[dayIdx].Completed++;
-   } else if (t.status === 'IN_PROGRESS') {
-     weeklyMap[dayIdx]['In Progress']++;
-   } else if (t.dueDate && new Date(t.dueDate) < now) {
-     weeklyMap[dayIdx].Overdue++;
-   }
- });
+    const rawDay = targetDate.getDay();
+    const dayIdx = rawDay === 0 ? 6 : rawDay - 1;
+
+    weeklyMap[dayIdx][category]++;
+  });
 
  const barData = DAYS.map((day, i) => ({
  day,
@@ -222,7 +224,7 @@ export const Inbox = () => {
  <Tooltip
  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 12 }}
  />
- <Bar dataKey="Completed" fill="#6366f1" radius={[4, 4, 0, 0]} stackId="a" />
+ <Bar dataKey="Completed" fill="#6366f1" radius={[0, 0, 0, 0]} stackId="a" />
  <Bar dataKey="In Progress" fill="#f59e0b" radius={[0, 0, 0, 0]} stackId="a" />
  <Bar dataKey="Overdue" fill="#ef4444" radius={[0, 0, 0, 0]} stackId="a" />
  </BarChart>

@@ -68,7 +68,6 @@ export const AppLayout = () => {
     { to: '/inbox', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/today', icon: CheckSquare, label: 'My Tasks' },
     { to: '/projects', icon: FolderOpen, label: 'Projects' },
-    { to: '/upcoming', icon: CalendarDays, label: 'Calendar' },
     { to: '/analytics', icon: BarChart2, label: 'Personal Report' },
     { to: '/team', icon: Users, label: 'Team' },
     { to: '/messages', icon: MessageSquare, label: 'Messages' },
