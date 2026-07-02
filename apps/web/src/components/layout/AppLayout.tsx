@@ -330,9 +330,7 @@ export const AppLayout = () => {
             </div>
           </div>
           {!location.pathname.startsWith('/settings') && (
-            <div className="hidden xl:block">
-              <RightSidebar />
-            </div>
+            <RightSidebar />
           )}
         </main>
       </div>

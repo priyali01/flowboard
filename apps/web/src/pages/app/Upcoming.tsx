@@ -10,8 +10,7 @@ export const Upcoming = () => {
  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
  const start = new Date();
- start.setDate(start.getDate() + 1);
- start.setHours(0, 0, 0, 0);
+ start.setHours(0, 0, 0, 0); // Include today
  
  const end = new Date();
  end.setDate(end.getDate() + 7);
@@ -36,8 +35,8 @@ export const Upcoming = () => {
  return (
  <div className="pb-8 relative">
  <div className="mb-8">
- <h1 className="text-3xl font-bold text-[var(--text-primary)]">Upcoming</h1>
- <p className="text-[var(--text-secondary)] mt-1">Next 7 Days</p>
+ <h1 className="text-3xl font-bold text-[var(--text-primary)]">Calendar</h1>
+ <p className="text-[var(--text-secondary)] mt-1">Today & Next 7 Days</p>
  </div>
  
  <div>
@@ -55,8 +54,8 @@ export const Upcoming = () => {
  ) : (
  <div className="flex flex-col items-center justify-center p-12 text-center bg-[var(--bg-surface)] rounded-xl border border-[var(--border-default)] border-dashed">
  <Calendar className="h-16 w-16 text-primary-200 mb-4" />
- <h3 className="text-lg font-medium text-[var(--text-primary)]">Nothing coming up</h3>
- <p className="mt-2 text-sm text-[var(--text-secondary)]">You don't have any tasks scheduled for the next 7 days.</p>
+ <h3 className="text-lg font-medium text-[var(--text-primary)]">Your calendar is clear</h3>
+ <p className="mt-2 text-sm text-[var(--text-secondary)]">You don't have any tasks scheduled for today or the next 7 days.</p>
  </div>
  )}
  </div>

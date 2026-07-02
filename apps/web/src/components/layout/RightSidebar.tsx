@@ -1,12 +1,15 @@
+import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useTasks } from '../../hooks/useTasks';
 import { format, isToday, isTomorrow, isFuture, formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 const upcomingColors = ['bg-primary-500', 'bg-green-500', 'bg-orange-500'];
 const upcomingIcons = ['📋', '🗓️', '📁'];
 
 export const RightSidebar = () => {
     const { data: tasks } = useTasks('global');
+    const navigate = useNavigate();
 
     // Upcoming tasks with due dates
     const upcomingTasks = tasks
@@ -20,15 +23,24 @@ export const RightSidebar = () => {
         .slice(0, 3);
 
     // Calendar
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const today = now.getDate();
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const physicalNow = new Date();
+    
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    const isCurrentMonthAndYear = physicalNow.getFullYear() === year && physicalNow.getMonth() === month;
+    const today = isCurrentMonthAndYear ? physicalNow.getDate() : -1;
+
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sun
+    const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+
+    const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+    const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
 
     const calendarDays: (number | null)[] = [
-        ...Array(firstDayOfMonth).fill(null),
+        ...Array(startOffset).fill(null),
         ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
     ];
     while (calendarDays.length % 7 !== 0) calendarDays.push(null);
@@ -36,18 +48,22 @@ export const RightSidebar = () => {
     // Task due dates for calendar highlights
     const taskDueDates = new Set(
         tasks
-            ?.filter(t => t.dueDate)
+            ?.filter(t => {
+                if (!t.dueDate) return false;
+                const d = new Date(t.dueDate);
+                return d.getFullYear() === year && d.getMonth() === month;
+            })
             .map(t => new Date(t.dueDate!).getDate())
     );
 
     return (
-        <aside className="w-[280px] hidden xl:flex flex-col bg-white/50 backdrop-blur-xl border-l border-white/50 overflow-y-auto p-5 space-y-6 flex-shrink-0">
+        <aside className="w-[280px] hidden xl:flex flex-col h-full bg-white/50 backdrop-blur-xl border-l border-white/50 overflow-y-auto p-5 space-y-6 flex-shrink-0">
 
             {/* ── Upcoming ─────────────────────────────────────────────── */}
             <div>
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-gray-800 ">Upcoming</h3>
-                    <button className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5">
+                    <button onClick={() => navigate('/upcoming')} className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5">
                         View All <ChevronRight size={12} />
                     </button>
                 </div>
@@ -58,9 +74,9 @@ export const RightSidebar = () => {
                     <div className="space-y-3">
                         {upcomingTasks.map((task, i) => {
                             const date = new Date(task.dueDate!);
-                            let timeLabel = format(date, 'MMM d, h:mm a');
-                            if (isToday(date)) timeLabel = `Today, ${format(date, 'h:mm a')}`;
-                            else if (isTomorrow(date)) timeLabel = `Tomorrow, ${format(date, 'h:mm a')}`;
+                            let timeLabel = format(date, 'MMM d');
+                            if (isToday(date)) timeLabel = 'Today';
+                            else if (isTomorrow(date)) timeLabel = 'Tomorrow';
 
                             return (
                                 <div key={task.id} className="flex items-start gap-3 p-3 bg-[var(--bg-app)] rounded-xl border border-[var(--border-default)]">
@@ -80,11 +96,11 @@ export const RightSidebar = () => {
                 )}
             </div>
 
-            {/* ── Team Activity ─────────────────────────────────────────── */}
+            {/* ── Recent Activity ─────────────────────────────────────────── */}
             <div>
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-gray-800 ">Team Activity</h3>
-                    <button className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5">
+                    <h3 className="text-sm font-bold text-gray-800 ">Recent Activity</h3>
+                    <button onClick={() => navigate('/analytics')} className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5">
                         View All <ChevronRight size={12} />
                     </button>
                 </div>
@@ -136,7 +152,7 @@ export const RightSidebar = () => {
             <div>
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-gray-800 ">Calendar</h3>
-                    <button className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5">
+                    <button onClick={() => navigate('/upcoming')} className="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5">
                         View Calendar <ChevronRight size={12} />
                     </button>
                 </div>
@@ -145,13 +161,13 @@ export const RightSidebar = () => {
                     {/* Month navigation */}
                     <div className="flex items-center justify-between mb-3">
                         <span className="text-xs font-bold text-gray-700 ">
-                            {format(now, 'MMMM yyyy')}
+                            {format(currentDate, 'MMMM yyyy')}
                         </span>
                         <div className="flex gap-1">
-                            <button className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-white :bg-gray-700 transition-colors">
+                            <button onClick={handlePrevMonth} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-white :bg-gray-700 transition-colors">
                                 <ChevronLeft size={14} />
                             </button>
-                            <button className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-white :bg-gray-700 transition-colors">
+                            <button onClick={handleNextMonth} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-white :bg-gray-700 transition-colors">
                                 <ChevronRight size={14} />
                             </button>
                         </div>
